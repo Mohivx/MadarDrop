@@ -39,6 +39,7 @@ jobs:
         run: |
           foreach ($taskCheck in @('editors', 'workflow', 'crop', 'release')) {
             $taskRun = Start-Process ./release-0.3.0/TangerineWindows.exe -ArgumentList ("--test-" + $taskCheck), ('"' + "$PWD\qa-$taskCheck" + '"') -PassThru -Wait -WindowStyle Hidden
+            Get-ChildItem -LiteralPath ("qa-" + $taskCheck) -Filter '*results.txt' | ForEach-Object { Get-Content -LiteralPath $_.FullName }
             if ($taskRun.ExitCode -ne 0) { throw ("Failed: " + $taskCheck) }
           }
       - uses: actions/upload-artifact@v4
