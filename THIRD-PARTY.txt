@@ -1,0 +1,34 @@
+MadarDrop 0.3.0 - dependency notices
+
+Application and installer source: MIT, see LICENSE.
+Independent implementation; not an official Tangerine for Mac port or affiliated with Leap Studio.
+No proprietary Tangerine source or packaged artwork is included.
+
+CPython 3.12 (PSF license and included component notices):
+https://www.python.org/psf/license/
+Full notices are retained in runtime/LICENSE.txt.
+
+pypdf 6.10.0 (BSD-3-Clause): https://github.com/py-pdf/pypdf
+Notices: runtime/packages/pypdf-*.dist-info/licenses/
+
+pypdfium2 5.14.0 (Apache-2.0 OR BSD-3-Clause for bindings; PDFium/dependencies retain their licenses):
+https://github.com/pypdfium2-team/pypdfium2
+PDFium build: 156.0.8076.0, pdfium-binaries origin.
+Full license bundle: runtime/packages/pypdfium2-*.dist-info/licenses/
+This includes PDFium COPYRIGHT and BUILD_LICENSES for the Windows x64 binary.
+
+Pillow 12.3.0 (MIT-CMU and included dependency notices): https://python-pillow.github.io/
+Notices: runtime/packages/pillow-*.dist-info/licenses/
+
+FFmpeg - external and optional, NOT distributed in the public setup or source ZIP:
+https://ffmpeg.org/ and https://ffmpeg.org/legal.html
+Windows build provider: https://www.gyan.dev/ffmpeg/builds/
+Runs as a separate process. Updates preserve existing copies. On the user's request,
+the app downloads the provider's release essentials ZIP directly to that user's device
+and verifies its SHA-256 checksum. It retains the downloaded LICENSE and attribution
+in the user's media-tools folder. Gyan builds may be GPL builds. MIT does not relicense
+FFmpeg or its libraries. If you redistribute FFmpeg, provide EXACT corresponding source,
+build information and every notice required by the particular binary and dependencies.
+The public setup builder rejects a payload containing ffmpeg.exe.
+
+Windows/.NET Framework and system fonts are supplied by Windows, not redistributed in this archive.

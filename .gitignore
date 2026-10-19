@@ -1,0 +1,13 @@
+release*/
+qa*/
+publish/
+tooling-gh/
+*.exe
+*.zip
+*.pdb
+*.log
+__pycache__/
+updater/manifest-*.json
+updater/*verification*.txt
+Tangerine-Windows-Preview-*/
+.vs/

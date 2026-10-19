@@ -1,0 +1,50 @@
+name: Windows build and checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Install build dependencies
+        run: python -m pip install -r requirements-build.txt
+      - name: Build application and public installer
+        shell: pwsh
+        run: |
+          ./build.ps1 -PythonExe (Get-Command python.exe).Source
+          ./updater/build-setup.ps1
+      - name: Test installer and long paths
+        shell: pwsh
+        run: |
+          $taskCsc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          & $taskCsc /nologo /target:exe /out:updater/UpdateTests.exe /r:System.dll /r:System.Core.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll updater/UpdateCore.cs updater/UpdateTests.cs
+          if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed' }
+          New-Item -ItemType Directory qa-legacy-fixture | Out-Null
+          & $taskCsc /nologo /target:winexe /out:qa-legacy-fixture/TangerineWindows.exe updater/LegacyFixture.cs
+          if ($LASTEXITCODE -ne 0) { throw 'Fixture compilation failed' }
+          & ./updater/UpdateTests.exe "$PWD\qa-core-update" "$PWD\qa-legacy-fixture\TangerineWindows.exe" "$PWD\release-0.3.0\TangerineWindows.exe"
+          if ($LASTEXITCODE -ne 0) { throw 'Update regression failed' }
+          $taskSetup = Start-Process ./MadarDrop-Setup-0.3.0.exe -ArgumentList '--test-package', ('"' + "$PWD\qa-setup" + '"'), ('"' + "$PWD\qa-legacy-fixture\TangerineWindows.exe" + '"') -PassThru -Wait -WindowStyle Hidden
+          if ($taskSetup.ExitCode -ne 0) { throw 'Full installer test failed' }
+      - name: Test image and PDF tools
+        shell: pwsh
+        run: |
+          foreach ($taskCheck in @('editors', 'workflow', 'crop', 'release')) {
+            $taskRun = Start-Process ./release-0.3.0/TangerineWindows.exe -ArgumentList ("--test-" + $taskCheck), ('"' + "$PWD\qa-$taskCheck" + '"') -PassThru -Wait -WindowStyle Hidden
+            if ($taskRun.ExitCode -ne 0) { throw ("Failed: " + $taskCheck) }
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: MadarDrop-windows-preview
+          path: |
+            MadarDrop-Setup-0.3.0.exe
+            qa-*/*results.txt
