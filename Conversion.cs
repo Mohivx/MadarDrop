@@ -417,8 +417,9 @@ namespace TangerineWindows
                 for (int i = 0; i < files.Length; i++) {
                     ct.ThrowIfCancellationRequested(); string tempPng = Temp(files[i], ".png");
                     try {
-                        Run("ffmpeg", new[] { "-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-i", files[i], "-frames:v", "1", "-update", "1", tempPng }, ct, null);
-                        using (var original = new Drawing.Bitmap(tempPng)) using (var rgb = new Drawing.Bitmap(original.Width, original.Height, Drawing.Imaging.PixelFormat.Format24bppRgb)) using (var jpeg = new MemoryStream()) {
+                        string image = files[i];
+                        if (!NativePdfImage(image)) { Run("ffmpeg", new[] { "-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-i", files[i], "-frames:v", "1", "-update", "1", tempPng }, ct, null); image = tempPng; }
+                        using (var original = new Drawing.Bitmap(image)) using (var rgb = new Drawing.Bitmap(original.Width, original.Height, Drawing.Imaging.PixelFormat.Format24bppRgb)) using (var jpeg = new MemoryStream()) {
                             using (var g = Drawing.Graphics.FromImage(rgb)) { g.Clear(Drawing.Color.White); g.DrawImage(original, 0, 0, original.Width, original.Height); }
                             rgb.Save(jpeg, Drawing.Imaging.ImageFormat.Jpeg); byte[] bytes = jpeg.ToArray();
                             double w = Math.Min(595.0, original.Width * 0.75), h = w * original.Height / original.Width;
@@ -438,5 +439,6 @@ namespace TangerineWindows
                 write("trailer\n<< /Size " + offsets.Count + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF\n");
             }
         }
+        public static bool NativePdfImage(string file) { return new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".gif", ".ico" }.Contains(Path.GetExtension(file).ToLowerInvariant()); }
     }
 }

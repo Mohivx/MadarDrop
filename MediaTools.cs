@@ -17,6 +17,7 @@ namespace TangerineWindows
         public static bool Ready { get { try { Engine.Tool("ffmpeg"); return true; } catch (FileNotFoundException) { return false; } } }
         public static bool NeedsEngine(string[] paths, string operation) {
             if (paths.Length == 0 || new[] { "more", "edit", "annotate", "redact", "background", "crop-editor", "collage", "metadata", "info", "copy-path", "folder", "reveal", "zip", "extract" }.Contains(operation)) return false;
+            if (operation == "pdf" && paths.All(Engine.NativePdfImage)) return false;
             return paths.Any(p => new[] { "image", "video", "audio" }.Contains(Catalog.Kind(p)));
         }
         public static string VerifyArchive(string archive, string checksum) {

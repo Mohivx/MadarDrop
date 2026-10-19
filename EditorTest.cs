@@ -48,8 +48,7 @@ namespace TangerineWindows
                 string jpg = ImageEdits.Save(framed, source, "JPG"); using (var b = new Drawing.Bitmap(jpg)) Check(b.Width == 288, "JPEG editor export decodes successfully");
                 var snapshot = redacted.Clone(); snapshot.Marks[0].Color = "#FFFFFF"; Check(redacted.Marks[0].Color == "#111111", "Undo snapshots retain independent annotation state");
                 Check(Hash(source) == original, "All image edits preserve original bytes");
-                // JPEG embeds directly: this PDF fixture also works without the optional media engine.
-                string pdf = Engine.Convert(new[] { jpg, jpg }, "pdf", new Parameters(), CancellationToken.None, null);
+                string pdf = Engine.Convert(new[] { source, cover }, "pdf", new Parameters(), CancellationToken.None, null);
                 string pdfOriginalHash = Hash(pdf);
                 string thumbs = Path.Combine(root, "page-previews"); var pages = PdfWorker.Inspect(new[] { pdf }, thumbs, CancellationToken.None);
                 Check(pages.Count == 2 && pages.All(p => File.Exists(p.thumbnail)), "PDF editor renders actual page thumbnails offline");

@@ -18,6 +18,7 @@ namespace TangerineWindows
                 check(!UpdateCheck.IsNewer("v0.2.1", new Version("0.3.0.0")) && !UpdateCheck.IsNewer("invalid", new Version("0.3.0.0")), "Older and invalid release tags are rejected");
                 string[] image = { "example.png" };
                 check(MediaTools.NeedsEngine(image, "webp") && MediaTools.NeedsEngine(new[] { "sample.mp4" }, "trim"), "Media conversions request the optional engine");
+                check(!MediaTools.NeedsEngine(new[] { "a.png", "b.jpg" }, "pdf") && MediaTools.NeedsEngine(new[] { "a.webp" }, "pdf"), "Common images create PDFs offline; unsupported native image formats request FFmpeg");
                 check(new[] { "crop-editor", "edit", "metadata", "folder", "copy-path", "zip", "info" }.All(op => !MediaTools.NeedsEngine(image, op)) && !MediaTools.NeedsEngine(new[] { "sample.pdf" }, "pdf-edit"), "Image editing, PDF and file actions work without a media download");
                 string archive = Path.Combine(root, "provider.zip");
                 using (var zip = ZipFile.Open(archive, ZipArchiveMode.Create)) {

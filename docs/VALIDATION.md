@@ -1,6 +1,6 @@
 # MadarDrop 0.3.0 validation
 
-Local Windows x64 release checks, 19 October 2026: **141 checks passed**.
+Local Windows x64 release checks, 19 October 2026: **142 checks passed**.
 
 | Suite | Passed |
 | --- | ---: |
@@ -9,7 +9,7 @@ Local Windows x64 release checks, 19 October 2026: **141 checks passed**.
 | Focused floating tools without revealing the main window | 5 |
 | Crop handles, aspect ratios, export and source preservation | 17 |
 | Arabic/English, light/dark and preference persistence | 11 |
-| Update versions, optional media package integrity and notices | 9 |
+| Update versions, optional media package integrity and notices | 10 |
 | Update/rollback, unsafe paths and installation beyond 260 characters | 17 |
 | Full embedded setup, repair, legacy upgrade and managed uninstall | 11 |
 
