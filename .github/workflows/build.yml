@@ -25,10 +25,10 @@ jobs:
         shell: pwsh
         run: |
           $taskCsc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-          & $taskCsc /nologo /target:exe /out:updater/UpdateTests.exe /r:System.dll /r:System.Core.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll updater/UpdateCore.cs updater/UpdateTests.cs
+          & $taskCsc /nologo /target:exe ("/out:$PWD\updater\UpdateTests.exe") /r:System.dll /r:System.Core.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll "$PWD\updater\UpdateCore.cs" "$PWD\updater\UpdateTests.cs"
           if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed' }
           New-Item -ItemType Directory qa-legacy-fixture | Out-Null
-          & $taskCsc /nologo /target:winexe /out:qa-legacy-fixture/TangerineWindows.exe updater/LegacyFixture.cs
+          & $taskCsc /nologo /target:winexe ("/out:$PWD\qa-legacy-fixture\TangerineWindows.exe") "$PWD\updater\LegacyFixture.cs"
           if ($LASTEXITCODE -ne 0) { throw 'Fixture compilation failed' }
           & ./updater/UpdateTests.exe "$PWD\qa-core-update" "$PWD\qa-legacy-fixture\TangerineWindows.exe" "$PWD\release-0.3.0\TangerineWindows.exe"
           if ($LASTEXITCODE -ne 0) { throw 'Update regression failed' }

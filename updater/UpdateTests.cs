@@ -42,7 +42,7 @@ namespace TangerineUpdate
                 bool traversal = false; try { UpdateCore.Child(target, "../escape.txt"); } catch (InvalidDataException) { traversal = true; } Check(traversal, "Paths outside the installation folder are rejected");
                 bool ads = false; try { UpdateCore.Child(target, "file:stream"); } catch (InvalidDataException) { ads = true; } Check(ads, "Alternate stream paths are rejected");
                 bool wrong = false; try { UpdateCore.ValidateTarget(Path.Combine(target, "my-photo.jpg")); } catch (IOException) { wrong = true; } Check(wrong, "Updater rejects a non-application destination");
-                string deep = UpdateCore.Long(Path.Combine(root, new string('d', 70), new string('e', 60), new string('f', 45)));
+                string deep = UpdateCore.Long(Path.Combine(root, new string('d', 70), new string('e', 70), new string('f', 70), new string('g', 70)));
                 Directory.CreateDirectory(deep); File.Copy(args[1], Path.Combine(deep, "TangerineWindows.exe"));
                 Check(deep.Length > 260, "Regression fixture exceeds the legacy Windows directory limit");
                 using (var stream = File.OpenRead(zipPath)) using (var staged = UpdateCore.Stage(stream, manifest)) {
