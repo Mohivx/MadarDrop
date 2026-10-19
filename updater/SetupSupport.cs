@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -13,7 +13,7 @@ namespace TangerineUpdate
 {
     public static class SetupSupport
     {
-        public const string Version = "0.3.0";
+        public const string Version = "0.3.1";
         public const string Marker = "MadarDrop.install.json";
         public const string RegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\MadarDrop";
         public static string Normal(string path) { return path.StartsWith(@"\\?\UNC\") ? @"\\" + path.Substring(8) : path.StartsWith(@"\\?\") ? path.Substring(4) : path; }

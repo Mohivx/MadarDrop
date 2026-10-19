@@ -30,15 +30,15 @@ jobs:
           New-Item -ItemType Directory qa-legacy-fixture | Out-Null
           & $taskCsc /nologo /target:winexe ("/out:$PWD\qa-legacy-fixture\TangerineWindows.exe") "$PWD\updater\LegacyFixture.cs"
           if ($LASTEXITCODE -ne 0) { throw 'Fixture compilation failed' }
-          & ./updater/UpdateTests.exe "$PWD\qa-core-update" "$PWD\qa-legacy-fixture\TangerineWindows.exe" "$PWD\release-0.3.0\TangerineWindows.exe"
+          & ./updater/UpdateTests.exe "$PWD\qa-core-update" "$PWD\qa-legacy-fixture\TangerineWindows.exe" "$PWD\release-0.3.1\TangerineWindows.exe"
           if ($LASTEXITCODE -ne 0) { throw 'Update regression failed' }
-          $taskSetup = Start-Process ./MadarDrop-Setup-0.3.0.exe -ArgumentList '--test-package', ('"' + "$PWD\qa-setup" + '"'), ('"' + "$PWD\qa-legacy-fixture\TangerineWindows.exe" + '"') -PassThru -Wait -WindowStyle Hidden
+          $taskSetup = Start-Process ./MadarDrop-Setup-0.3.1.exe -ArgumentList '--test-package', ('"' + "$PWD\qa-setup" + '"'), ('"' + "$PWD\qa-legacy-fixture\TangerineWindows.exe" + '"') -PassThru -Wait -WindowStyle Hidden
           if ($taskSetup.ExitCode -ne 0) { throw 'Full installer test failed' }
       - name: Test image and PDF tools
         shell: pwsh
         run: |
           foreach ($taskCheck in @('editors', 'workflow', 'crop', 'release')) {
-            $taskRun = Start-Process ./release-0.3.0/TangerineWindows.exe -ArgumentList ("--test-" + $taskCheck), ('"' + "$PWD\qa-$taskCheck" + '"') -PassThru -Wait -WindowStyle Hidden
+            $taskRun = Start-Process ./release-0.3.1/TangerineWindows.exe -ArgumentList ("--test-" + $taskCheck), ('"' + "$PWD\qa-$taskCheck" + '"') -PassThru -Wait -WindowStyle Hidden
             Get-ChildItem -LiteralPath ("qa-" + $taskCheck) -Filter '*results.txt' | ForEach-Object { Get-Content -LiteralPath $_.FullName }
             if ($taskRun.ExitCode -ne 0) { throw ("Failed: " + $taskCheck) }
           }
@@ -47,5 +47,5 @@ jobs:
         with:
           name: MadarDrop-windows-preview
           path: |
-            MadarDrop-Setup-0.3.0.exe
+            MadarDrop-Setup-0.3.1.exe
             qa-*/*results.txt

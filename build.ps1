@@ -1,4 +1,4 @@
-param([string]$OutputName = 'release-0.3.0', [string]$PythonExe = 'python.exe', [switch]$IncludeMedia)
+param([string]$OutputName = 'release-0.3.1', [string]$PythonExe = 'python.exe', [switch]$IncludeMedia)
 $ErrorActionPreference = 'Stop'
 $taskRoot = $PSScriptRoot
 $taskOutput = Join-Path $taskRoot $OutputName
@@ -7,7 +7,8 @@ $taskCompiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.
 $taskFramework = Split-Path $taskCompiler
 $taskReferences = @('System.dll', 'System.Core.dll', 'System.Xaml.dll', 'System.Xml.dll', 'System.Xml.Linq.dll', 'System.Drawing.dll', 'System.Windows.Forms.dll', 'System.Web.Extensions.dll', 'System.IO.Compression.dll', 'System.IO.Compression.FileSystem.dll', 'WPF\WindowsBase.dll', 'WPF\PresentationCore.dll', 'WPF\PresentationFramework.dll') | ForEach-Object { '/reference:' + (Join-Path $taskFramework $_) }
 $taskSources = Get-ChildItem -LiteralPath $taskRoot -Filter '*.cs' | Select-Object -ExpandProperty FullName
-& $taskCompiler /nologo /target:winexe /platform:x64 /optimize+ /utf8output ('/out:' + (Join-Path $taskOutput 'TangerineWindows.exe')) ('/win32manifest:' + (Join-Path $taskRoot 'app.manifest')) $taskReferences $taskSources
+& (Join-Path $taskRoot 'branding\build-brand.ps1')
+& $taskCompiler /nologo /target:winexe /platform:x64 /optimize+ /utf8output ('/out:' + (Join-Path $taskOutput 'TangerineWindows.exe')) ('/win32manifest:' + (Join-Path $taskRoot 'app.manifest')) ('/win32icon:' + (Join-Path $taskRoot 'assets\MadarDrop.ico')) $taskReferences $taskSources
 if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
 foreach ($taskTool in $(if ($IncludeMedia) { @('ffmpeg') } else { @() })) {
     $taskInstalled = Get-Command ($taskTool + '.exe') -ErrorAction SilentlyContinue

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -10,8 +10,8 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 [assembly: AssemblyTitle("MadarDrop Setup")]
-[assembly: AssemblyVersion("0.3.0.0")]
-[assembly: AssemblyFileVersion("0.3.0.0")]
+[assembly: AssemblyVersion("0.3.1.0")]
+[assembly: AssemblyFileVersion("0.3.1.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 namespace TangerineUpdate
 {
@@ -22,7 +22,7 @@ namespace TangerineUpdate
         readonly Label found = new Label { Width = 525, Height = 54 };
         readonly Label note = new Label { Width = 525, Height = 66, Margin = new Padding(0, 14, 0, 5) };
         readonly Label status = new Label { Width = 525, Height = 100, AutoEllipsis = true };
-        readonly Button apply = new Button { Width = 195, Height = 42, BackColor = Color.FromArgb(28, 139, 138), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        readonly Button apply = new Button { Width = 195, Height = 42, BackColor = Color.FromArgb(255, 101, 31), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
         readonly Button browse = new Button { AutoSize = true };
         readonly CheckBox launch = new CheckBox { Checked = true, AutoSize = true };
         readonly CheckBox desktop = new CheckBox { Checked = false, AutoSize = true };
@@ -31,7 +31,8 @@ namespace TangerineUpdate
         bool Arabic { get { return language.SelectedIndex != 1; } }
         string T(string ar, string en) { return Arabic ? ar : en; }
         public SetupForm(string initial, bool english) {
-            Text = "MadarDrop Setup 0.3.0"; ClientSize = new Size(610, 600); StartPosition = FormStartPosition.CenterScreen; FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; Font = new Font("Segoe UI", 10); BackColor = Color.FromArgb(245, 247, 247);
+            Text = "MadarDrop Setup 0.3.1"; ClientSize = new Size(610, 600); StartPosition = FormStartPosition.CenterScreen; FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; Font = new Font("Segoe UI", 10); BackColor = Color.FromArgb(245, 247, 247);
+            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath); BackColor = Color.FromArgb(247, 245, 242);
             var panel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(28), AutoScroll = true };
             language.Items.AddRange(new object[] { "العربية", "English" }); language.SelectedIndex = english ? 1 : 0;
             panel.Controls.Add(language); panel.Controls.Add(heading); panel.Controls.Add(found); panel.Controls.Add(target); panel.Controls.Add(browse); panel.Controls.Add(note); panel.Controls.Add(desktop); panel.Controls.Add(launch); panel.Controls.Add(apply); panel.Controls.Add(status); Controls.Add(panel);
@@ -44,7 +45,7 @@ namespace TangerineUpdate
             RightToLeft = Arabic ? RightToLeft.Yes : RightToLeft.No; RightToLeftLayout = Arabic;
             string action = SetupSupport.ActionFor(target.Text);
             heading.Text = T("مدار دروب", "MadarDrop");
-            found.Text = action == "install" ? T("جاهز لتثبيت MadarDrop 0.3.0 على جهازك.", "Ready to install MadarDrop 0.3.0 on this PC.") : T("وجدنا نسختك الحالية: ", "Existing installation found: ") + SetupSupport.InstalledVersion(target.Text) + (action == "update" ? T(" — يتوفر تحديث إلى 0.3.0", " — update available: 0.3.0") : action == "newer" ? T(" — أحدث من هذا المثبّت", " — newer than this installer") : T(" — لديك أحدث نسخة من هذه الحزمة", " — this package is already installed"));
+            found.Text = action == "install" ? T("جاهز لتثبيت MadarDrop 0.3.1 على جهازك.", "Ready to install MadarDrop 0.3.1 on this PC.") : T("وجدنا نسختك الحالية: ", "Existing installation found: ") + SetupSupport.InstalledVersion(target.Text) + (action == "update" ? T(" — يتوفر تحديث إلى 0.3.1", " — update available: 0.3.1") : action == "newer" ? T(" — أحدث من هذا المثبّت", " — newer than this installer") : T(" — لديك أحدث نسخة من هذه الحزمة", " — this package is already installed"));
             browse.Text = T("تغيير المجلد…", "Change folder…"); desktop.Text = T("إنشاء اختصار على سطح المكتب", "Create a desktop shortcut"); launch.Text = T("تشغيل التطبيق بعد الانتهاء", "Launch the app when finished");
             note.Text = T("احفظ تعديلاتك قبل المتابعة. يحتفظ التحديث بملفاتك وإعداداتك ويصنع نسخة احتياطية. التثبيت خاص بحسابك ولا يحتاج صلاحية مسؤول.", "Save your edits before continuing. Updates keep your files and preferences and create a backup. Installation is for your account and needs no administrator access.");
             apply.Text = done ? T("إغلاق", "Close") : action == "update" ? T("تحديث الآن", "Update now") : action == "repair" ? T("إصلاح النسخة الحالية", "Repair installation") : T("تثبيت الآن", "Install now");
@@ -104,7 +105,7 @@ namespace TangerineUpdate
                         string legacy = Path.Combine(root, "Tangerine-Windows-Preview-0.1"); Directory.CreateDirectory(legacy); File.Copy(oldExecutable, Path.Combine(legacy, "TangerineWindows.exe")); File.WriteAllText(Path.Combine(legacy, "ffmpeg.exe"), "existing external media tool"); File.WriteAllText(Path.Combine(legacy, "my-output.png"), "user output");
                         check(SetupSupport.ActionFor(legacy) == "update", "Legacy preview is recognized and offered an update");
                         var updated = UpdateCore.Apply(payload, legacy, null); SetupSupport.WriteMarker(legacy, payload.Manifest);
-                        check(SetupSupport.InstalledVersion(legacy) == new Version("0.3.0.0") && File.Exists(updated.Backup), "Full legacy upgrade succeeds in place with a backup");
+                        check(SetupSupport.InstalledVersion(legacy) == new Version("0.3.1.0") && File.Exists(updated.Backup), "Full legacy upgrade succeeds in place with a backup");
                         check(File.ReadAllText(Path.Combine(legacy, "ffmpeg.exe")) == "existing external media tool" && File.ReadAllText(Path.Combine(legacy, "my-output.png")) == "user output", "Legacy upgrade keeps the existing media engine and converted files");
                     }
                 }

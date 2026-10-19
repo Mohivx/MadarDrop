@@ -22,7 +22,7 @@ namespace TangerineWindows
         public static bool Arabic { get { return Preferences.Language == "ar"; } }
         public static bool Dark { get { return Preferences.Dark; } }
         public static event EventHandler Changed;
-        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.3.0|مدار دروب 0.3.0
+        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.3.1|مدار دروب 0.3.1
 Set up media tools…|إعداد أدوات الوسائط…
 Check for updates…|البحث عن تحديثات…
 Crop Image|قص الصورة
@@ -281,7 +281,7 @@ Keep this editing session under 300 pages.|أبقِ عدد الصفحات أقل
             record.Rendered = T(record.Original); element.SetValue(property, record.Rendered);
         }
         static readonly Dictionary<string, string> colors = new Dictionary<string, string> {
-            { "#F5F6F3", "#181A1D" }, { "#FFFFFF", "#25282D" }, { "#232624", "#ECEFEC" }, { "#7B817D", "#A3AAA5" }, { "#E5E8E5", "#3D4440" }, { "#E9EDE7", "#303630" }, { "#FDE8DB", "#472D22" }, { "#CA4A16", "#FFAA75" }, { "#5B7460", "#A4CCAA" }, { "#E8EBE6", "#24282D" }, { "#F0F2EE", "#30353B" }, { "#B33A2E", "#FF8E82" }, { "#725335", "#C4C9CB" }, { "#694B32", "#D4D7D8" }
+            { "#F7F5F2", "#181A1D" }, { "#FFFFFF", "#25282D" }, { "#232624", "#ECEFEC" }, { "#7B817D", "#A3AAA5" }, { "#E5E8E5", "#3D4440" }, { "#E9EDE7", "#303630" }, { "#FDE8DB", "#472D22" }, { "#CA4A16", "#FFAA75" }, { "#5B7460", "#A4CCAA" }, { "#E8EBE6", "#24282D" }, { "#F0F2EE", "#30353B" }, { "#B33A2E", "#FF8E82" }, { "#725335", "#C4C9CB" }, { "#694B32", "#D4D7D8" }
         };
         static Brush Remap(Brush brush, bool foreground)
         {

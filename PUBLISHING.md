@@ -4,7 +4,7 @@ Publish only the independent application, installer, tests and build files. Rele
 setup, curated source ZIP and SHA-256 checksums. Do not publish the development workspace, account
 credentials, user files, or preview backups. Screenshots under docs/ are from our own application.
 
-Keep the independent name/orbit mark and non-affiliation statement. Do not describe this as an official
+Keep the independent name/lemon mark and non-affiliation statement. Do not describe this as an official
 Tangerine release or use that product's logo, screenshots or assets. Copyright rules can distinguish
 functionality from protectable code and screen expression; trademarks can raise origin-confusion
 issues. Renaming a close interface reproduction does not settle every legal question. This is not

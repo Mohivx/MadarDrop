@@ -1,4 +1,18 @@
-# MadarDrop 0.3.0 validation
+# MadarDrop release validation
+
+## 0.3.1 — lemon mark and orange appearance
+
+19 October 2026: the existing 11 language/appearance checks and 11 full installer checks passed,
+including upgrading the actual 0.3.0 executable in place. The original vector mark is used in
+the UI/tray and compiled into the app, installer and uninstaller executables. The ICO includes
+16, 24, 32, 48, 64, 128 and 256 pixel frames. Light Arabic/English and dark screenshots were
+rendered from the application. Existing conversion/editor behavior was not changed by this update.
+
+Reference research is recorded in `REFERENCE.ar.md`: 22 tool-window image links, press screenshots,
+observed interaction and remaining functional differences. Source screenshots are linked rather
+than copied into the package. Native app UI automation was not performed.
+
+## 0.3.0 baseline
 
 Local Windows x64 release checks, 19 October 2026: **142 checks passed**.
 

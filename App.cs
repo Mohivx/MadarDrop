@@ -26,12 +26,12 @@ namespace TangerineWindows
 {
     public static class Theme
     {
-        public static readonly Color Orange = Color.FromRgb(28, 139, 138);
+        public static readonly Color Orange = Color.FromRgb(255, 101, 31);
         public static readonly Brush Accent = new SolidColorBrush(Orange);
         public static Brush Ink { get { return Brush(Ui.Dark ? "#ECEFEC" : "#232624"); } }
         public static Brush Muted { get { return Brush(Ui.Dark ? "#A3AAA5" : "#7B817D"); } }
         public static Brush Line { get { return Brush(Ui.Dark ? "#3D4440" : "#E5E8E5"); } }
-        public static Brush Paper { get { return Brush(Ui.Dark ? "#181A1D" : "#F5F6F3"); } }
+        public static Brush Paper { get { return Brush(Ui.Dark ? "#181A1D" : "#F7F5F2"); } }
         public static Brush Surface { get { return Brush(Ui.Dark ? "#25282D" : "#FFFFFF"); } }
         public static Brush Brush(string hex) { return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)); }
         public static TextBlock Text(string text, double size, Brush color, FontWeight weight)
@@ -105,12 +105,12 @@ namespace TangerineWindows
         protected override void OnRender(DrawingContext dc)
         {
             base.OnRender(dc);
-            dc.DrawEllipse(Theme.Brush(Ui.Dark ? "#252A31" : "#EFF2EF"), null, new Point(184, 178), 165, 165);
-            dc.DrawEllipse(Theme.Brush(Ui.Dark ? "#24282D" : "#F8FAF8"), new Pen(Theme.Line, 1), new Point(184, 176), 162, 162);
+            dc.DrawEllipse(Theme.Brush(Ui.Dark ? "#252A31" : "#B5D9C0AF"), null, new Point(184, 178), 165, 165);
+            dc.DrawEllipse(Theme.Brush(Ui.Dark ? "#24282D" : "#99F1DECF"), new Pen(Theme.Brush(Ui.Dark ? "#3D4440" : "#65FFFFFF"), 1), new Point(184, 176), 162, 162);
             double step = 360.0 / Math.Max(1, Items.Count);
             for (int i = 0; i < Items.Count; i++) {
                 bool active = i == Hover;
-                var gradient = new LinearGradientBrush(active ? Theme.Orange : Ui.Dark ? Color.FromRgb(58, 64, 70) : Color.FromRgb(251, 253, 251), active ? Color.FromRgb(255, 119, 41) : Ui.Dark ? Color.FromRgb(42, 47, 53) : Color.FromRgb(235, 240, 236), 90);
+                var gradient = new LinearGradientBrush(active ? Theme.Orange : Ui.Dark ? Color.FromRgb(58, 64, 70) : Color.FromArgb(232, 255, 249, 240), active ? Color.FromRgb(255, 119, 41) : Ui.Dark ? Color.FromRgb(42, 47, 53) : Color.FromArgb(220, 255, 237, 224), 90);
                 double angle = -90 + i * step;
                 dc.DrawGeometry(gradient, new Pen(active ? Theme.Accent : Theme.Line, 1.4), Segment(angle - step / 2 + 1.7, angle + step / 2 - 1.7));
                 bool tool = new[] { "compress", "metadata", "edit", "annotate", "background", "crop-editor", "redact" }.Contains(Items[i].Id);
@@ -118,7 +118,7 @@ namespace TangerineWindows
                 if (tool) { Icon(dc, Items[i].Id, new Point(textAt.X, textAt.Y - 9), active ? Brushes.White : Theme.Ink); textAt.Y += 12; }
                 Label(dc, Items[i].Label, textAt, tool ? Ui.Arabic ? 12 : 9.5 : Items[i].Label.Length > 7 ? 10 : 12.5, active ? Brushes.White : Theme.Ink, true);
             }
-            dc.DrawEllipse(Theme.Surface, new Pen(Theme.Line, 1), new Point(184, 176), 54, 54);
+            dc.DrawEllipse(Ui.Dark ? Theme.Surface : Theme.Brush("#EFFFFAF4"), new Pen(Theme.Line, 1), new Point(184, 176), 54, 54);
             if (!HasFiles) Label(dc, "↧", new Point(184, 161), 27, Theme.Accent, false);
             string center = menuMode == 1 && HasFiles ? Center : Hover >= 0 && Hover < Items.Count ? Items[Hover].Label : Center;
             Label(dc, center.Length > 16 ? center.Substring(0, 14) + "…" : center, new Point(184, HasFiles ? 176 : 193), center.Length > 11 ? 10 : 12, Theme.Ink, false);
@@ -248,14 +248,14 @@ namespace TangerineWindows
         int mode = 0, completed = 0, currentPage = 0;
         public MainWindow(bool render)
         {
-            Title = "MadarDrop 0.3.0"; Width = 1050; Height = 740; MinWidth = 940; MinHeight = 690;
+            Title = "MadarDrop 0.3.1"; Width = 1050; Height = 740; MinWidth = 940; MinHeight = 690;
             WindowStartupLocation = WindowStartupLocation.CenterScreen; Background = Theme.Paper; Foreground = Theme.Ink;
             FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
             Resources.Add(typeof(Button), ButtonStyle());
             var root = new Grid { Background = Theme.Paper }; root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(78) }); root.RowDefinitions.Add(new RowDefinition()); root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(44) }); Content = root;
             var header = new Grid { Margin = new Thickness(28, 0, 28, 0) }; header.ColumnDefinitions.Add(new ColumnDefinition()); header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             var brand = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-            brand.Children.Add(OrangeMark(35)); brand.Children.Add(new TextBlock { Text = "MadarDrop", FontSize = 24, FontWeight = FontWeights.SemiBold, Margin = new Thickness(11, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
+            brand.Children.Add(new LemonMark(40)); brand.Children.Add(new TextBlock { Text = "MadarDrop", FontSize = 24, FontWeight = FontWeights.SemiBold, Margin = new Thickness(11, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
             brand.Children.Add(new Border { Child = Theme.Text("WINDOWS PREVIEW", 9, Theme.Muted, FontWeights.SemiBold), Background = Theme.Brush("#E9EDE7"), Padding = new Thickness(8, 5, 8, 5), CornerRadius = new CornerRadius(6), Margin = new Thickness(12, 4, 0, 0), VerticalAlignment = VerticalAlignment.Center });
             header.Children.Add(brand); var local = Theme.Text("●  Everything stays on your PC", 12, Theme.Brush("#5B7460")); local.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(local, 1); header.Children.Add(local); root.Children.Add(header);
             var body = new Grid { Margin = new Thickness(16, 0, 20, 0) }; body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(165) }); body.ColumnDefinitions.Add(new ColumnDefinition()); Grid.SetRow(body, 1); root.Children.Add(body);
@@ -269,7 +269,7 @@ namespace TangerineWindows
             Grid.SetColumn(pages, 1); body.Children.Add(pages);
             BuildConvert(); BuildActivity(); BuildSettings(); SetPage(0);
             var footer = new Grid { Margin = new Thickness(28, 0, 28, 0) }; footer.ColumnDefinitions.Add(new ColumnDefinition()); footer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            engine.VerticalAlignment = VerticalAlignment.Center; footer.Children.Add(engine); var version = Theme.Text("MadarDrop · v0.3.0", 10, Theme.Muted); version.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(version, 1); footer.Children.Add(version); Grid.SetRow(footer, 2); root.Children.Add(footer);
+            engine.VerticalAlignment = VerticalAlignment.Center; footer.Children.Add(engine); var version = Theme.Text("MadarDrop · v0.3.1", 10, Theme.Muted); version.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(version, 1); footer.Children.Add(version); Grid.SetRow(footer, 2); root.Children.Add(footer);
             wheel = new WheelWindow(this);
             watcher = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(25) }; watcher.Tick += Watch;
             cancel.Click += delegate { if (cancellation != null) cancellation.Cancel(); }; cancel.Visibility = Visibility.Collapsed;
@@ -305,14 +305,7 @@ namespace TangerineWindows
         }
         public static FrameworkElement OrangeMark(int size)
         {
-            var canvas = new System.Windows.Controls.Canvas { Width = size, Height = size };
-            var orbit = new System.Windows.Shapes.Ellipse { Width = size - 3, Height = size - 13, Stroke = Theme.Accent, StrokeThickness = 2.5, RenderTransform = new RotateTransform(-35, size / 2.0, size / 2.0) };
-            System.Windows.Controls.Canvas.SetTop(orbit, 7); canvas.Children.Add(orbit);
-            var core = new System.Windows.Shapes.Ellipse { Width = 10, Height = 10, Fill = Theme.Accent };
-            System.Windows.Controls.Canvas.SetLeft(core, size / 2.0 - 5); System.Windows.Controls.Canvas.SetTop(core, size / 2.0 - 5); canvas.Children.Add(core);
-            var dot = new System.Windows.Shapes.Ellipse { Width = 7, Height = 7, Fill = Theme.Accent };
-            System.Windows.Controls.Canvas.SetLeft(dot, size - 9); System.Windows.Controls.Canvas.SetTop(dot, 2); canvas.Children.Add(dot);
-            return canvas;
+            return new LemonMark(size);
         }
         void BuildConvert()
         {
@@ -393,14 +386,11 @@ namespace TangerineWindows
         public void Reveal() { Show(); if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal; Activate(); }
         void InitTray()
         {
-            using (var bmp = new Drawing.Bitmap(40, 40)) {
-                using (var g = Drawing.Graphics.FromImage(bmp)) {
-                    g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias; g.Clear(Drawing.Color.Transparent);
-                    using (var b = new Drawing.SolidBrush(Drawing.Color.FromArgb(28, 139, 138))) g.FillEllipse(b, 2, 2, 36, 36);
-                    using (var pen = new Drawing.Pen(Drawing.Color.White, 2.2f)) g.DrawEllipse(pen, 8, 13, 24, 14);
-                    g.FillEllipse(Drawing.Brushes.White, 16, 16, 8, 8); g.FillEllipse(Drawing.Brushes.White, 29, 10, 5, 5);
-                }
+            var lemon = new PngBitmapEncoder(); lemon.Frames.Add(BitmapFrame.Create(Brand.Raster(48)));
+            using (var raster = new MemoryStream()) { lemon.Save(raster); raster.Position = 0;
+                using (var bmp = new Drawing.Bitmap(raster)) {
                 IntPtr handle = bmp.GetHicon(); using (var icon = Drawing.Icon.FromHandle(handle)) appIcon = (Drawing.Icon)icon.Clone(); Native.DestroyIcon(handle);
+                }
             }
             using (var stream = new MemoryStream()) { appIcon.Save(stream); stream.Position = 0; Icon = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad); }
             tray = new Forms.NotifyIcon { Icon = appIcon, Text = "MadarDrop — Shift + drag to convert", Visible = true };

@@ -3,13 +3,19 @@
 Local file conversion and editing for Windows, with a wheel that follows your drag.
 Arabic and English. Light and dark appearance. Independent community project.
 
+<img src="assets/lemon-preview.png" alt="MadarDrop lemon mark" width="96" />
+
+0.3.1 brings an original lemon icon and an orange/cream appearance inspired by the public reference
+screenshots. [Reference study and 22 official tool-window images](docs/REFERENCE.ar.md) records the
+observed menus, shortcut differences and remaining functionality gaps.
+
 **[Download for Windows](https://github.com/Mohivx/MadarDrop/releases/latest)** · [العربية](README.ar.md)
 
 ![MadarDrop tools wheel](docs/tools-ar-dark.png)
 
 ## Install or update
 
-Windows 10/11 **x64**, .NET Framework **4.8**. Run `MadarDrop-Setup-0.3.0.exe` from Releases.
+Windows 10/11 **x64**, .NET Framework **4.8**. Run `MadarDrop-Setup-0.3.1.exe` from Releases.
 The installer detects registered installations, running legacy previews, and adjacent portable
 preview folders. It offers **Update**, **Repair**, or a fresh per-user **Install**. You can select
 an existing folder manually. No administrator privileges are needed. Updates stay in the same folder,
@@ -45,7 +51,7 @@ checks this repository's latest stable release and opens its download page.
 
 ## Limits
 
-This is a **0.3.0 preview**, not feature parity with any commercial app. No OCR, PDF-to-Office,
+This is a **0.3.1 preview**, not feature parity with any commercial app. No OCR, PDF-to-Office,
 PDF page-text editing, face detection, advanced timeline editor, RAR/TAR/GZIP, nearby sharing
 or floating file shelf. Encrypted PDFs must be unlocked first. Editing invalidates document
 signatures. Image editing exports a still image (up to 64 megapixels); animated metadata editing
@@ -64,7 +70,7 @@ python -m pip install -r requirements-build.txt
 .\updater\build-setup.ps1
 ```
 
-Output: `MadarDrop-Setup-0.3.0.exe`. Keep `runtime` beside the uninstalled app build.
+Output: `MadarDrop-Setup-0.3.1.exe`. Keep `runtime` beside the uninstalled app build.
 `build.ps1 -IncludeMedia` is for local experiments; the public setup builder refuses payloads
 containing `ffmpeg.exe`. See [THIRD-PARTY.txt](THIRD-PARTY.txt).
 
@@ -75,11 +81,11 @@ indicate an official relationship with Tangerine.
 ## Verify
 
 ```powershell
-.\release-0.3.0\TangerineWindows.exe --self-test C:\Temp\MadarDrop-core-new
-.\release-0.3.0\TangerineWindows.exe --test-editors C:\Temp\MadarDrop-editors-new
-.\release-0.3.0\TangerineWindows.exe --test-workflow C:\Temp\MadarDrop-workflow-new
-.\release-0.3.0\TangerineWindows.exe --test-crop C:\Temp\MadarDrop-crop-new
-.\MadarDrop-Setup-0.3.0.exe --test-package C:\Temp\MadarDrop-setup-new
+.\release-0.3.1\TangerineWindows.exe --self-test C:\Temp\MadarDrop-core-new
+.\release-0.3.1\TangerineWindows.exe --test-editors C:\Temp\MadarDrop-editors-new
+.\release-0.3.1\TangerineWindows.exe --test-workflow C:\Temp\MadarDrop-workflow-new
+.\release-0.3.1\TangerineWindows.exe --test-crop C:\Temp\MadarDrop-crop-new
+.\MadarDrop-Setup-0.3.1.exe --test-package C:\Temp\MadarDrop-setup-new
 ```
 
 Each test requires a new directory. Media tests require FFmpeg on PATH or beside the build.
@@ -96,6 +102,6 @@ disclose normal connection metadata, not file contents.
 MadarDrop is an independent, AI-assisted implementation inspired by publicly demonstrated drag-and-drop
 file tools, including Tangerine for Mac. It is **not an official Windows port**, is not affiliated with
 Leap Studio, and contains no Tangerine proprietary source code, screenshots or packaged assets.
-The name and orbit mark are independent. MIT covers our application and installer source; dependencies
+The name and lemon mark are independent. MIT covers our application and installer source; dependencies
 retain their licenses. This does not provide legal clearance for interface similarities or third-party
 marks. See [publishing notes](PUBLISHING.md).
