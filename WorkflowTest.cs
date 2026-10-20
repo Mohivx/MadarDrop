@@ -27,6 +27,10 @@ namespace TangerineWindows
                 var automatic = new Window { Width = 380, SizeToContent = SizeToContent.Height, Content = new System.Windows.Controls.Border { Height = 610 }, Opacity = 0 };
                 QuickPopup.Place(automatic, anchor); bool fits = false; automatic.Loaded += delegate { fits = automatic.Top + automatic.ActualHeight <= area.Bottom / scale && automatic.Left + automatic.ActualWidth <= area.Right / scale; automatic.Close(); }; automatic.ShowDialog();
                 check(fits, "Content-sized tool dialogs also stay on screen");
+                bool cancelled = false; var job = new FloatingJob("Processing", delegate { cancelled = true; }); job.Opacity = 0; QuickPopup.Place(job, anchor); job.Show(); job.Close();
+                check(cancelled && job.IsVisible && !main.IsVisible, "Closing floating progress requests cancellation without revealing the dashboard");
+                job.Finish("Cancelled", null, false); job.Close(); check(!job.IsVisible, "Cancelled progress dismisses normally after processing stops");
+                var failedJob = new FloatingJob("Processing", null); failedJob.Opacity = 0; failedJob.Show(); failedJob.Finish("Test error", null, false); check(failedJob.IsVisible, "Failed quick jobs remain visible for inspection"); failedJob.Close();
                 main.Close(); report.Add("RESULT: " + report.Count + " workflow checks passed."); File.WriteAllLines(Path.Combine(root, "workflow-test-results.txt"), report, Encoding.UTF8); return 0;
             } catch (Exception e) { report.Add("FAIL " + e); Directory.CreateDirectory(root); File.WriteAllLines(Path.Combine(root, "workflow-test-results.txt"), report, Encoding.UTF8); return 1; }
         }

@@ -23,7 +23,7 @@ namespace TangerineWindows
             try {
                 string json = await Task.Run(delegate {
                     ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
-                    var request = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/Mohivx/MadarDrop/releases/latest"); request.UserAgent = "MadarDrop/0.3.1"; request.Timeout = 15000; request.ReadWriteTimeout = 15000;
+                    var request = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/Mohivx/MadarDrop/releases/latest"); request.UserAgent = "MadarDrop/0.4.0"; request.Timeout = 15000; request.ReadWriteTimeout = 15000;
                     using (var response = request.GetResponse()) using (var reader = new StreamReader(response.GetResponseStream())) return reader.ReadToEnd();
                 });
                 var release = new JavaScriptSerializer().Deserialize<GitHubRelease>(json); var current = Assembly.GetExecutingAssembly().GetName().Version;

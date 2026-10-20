@@ -12,7 +12,7 @@ namespace TangerineWindows
 {
     public sealed class CropSurface : FrameworkElement
     {
-        public readonly BitmapSource Source;
+        public BitmapSource Source { get; private set; }
         public Rect Selection;
         public double Aspect;
         public Action Changed;
@@ -25,6 +25,10 @@ namespace TangerineWindows
             Source = source; Selection = new Rect(0, 0, source.PixelWidth, source.PixelHeight); MinHeight = 100;
             MouseLeftButtonDown += Start; MouseMove += Move; MouseLeftButtonUp += End;
             LostMouseCapture += delegate { dragging = false; };
+        }
+        public void ReplaceFrame(BitmapSource source) {
+            bool changedSize = Source.PixelWidth != source.PixelWidth || Source.PixelHeight != source.PixelHeight;
+            Source = source; if (changedSize) Reset(); else Notify();
         }
         public Rect ImageBounds()
         {
@@ -173,7 +177,7 @@ namespace TangerineWindows
             };
             Grid.SetRow(footer, 4); root.Children.Add(footer); Surface.Changed = Fields; Fields();
             PreviewKeyDown += delegate(object sender, KeyEventArgs e) { if (e.Key == Key.Escape) Close(); };
-            Ui.Attach(this, delegate { glass.Background = new LinearGradientBrush((Color)ColorConverter.ConvertFromString(Ui.Dark ? "#F22B3038" : "#F2FFD17F"), (Color)ColorConverter.ConvertFromString(Ui.Dark ? "#F2181B20" : "#F2FF9E88"), 90); });
+            Ui.Attach(this, delegate { glass.Background = ToolFrame.Glass; });
         }
         void PrepareField(TextBox field) { field.Width = 60; field.Height = 24; field.Padding = new Thickness(6, 2, 2, 2); field.FontSize = 11; field.BorderThickness = new Thickness(0); field.Background = Theme.Brush("#DFFFFFFF"); field.Foreground = Theme.Ink; field.VerticalContentAlignment = VerticalAlignment.Center; }
         void SelectRatio(int index) { for (int i = 0; i < ratios.Count; i++) { ratios[i].Background = i == index ? Theme.Accent : Theme.Brush("#22A25931"); ratios[i].Foreground = i == index ? Brushes.White : Theme.Brush("#694B32"); } }

@@ -53,6 +53,8 @@ namespace TangerineWindows
         public string Center = "Drop a file", Caption = "Choose a format";
         public bool HasMore, HasFiles;
         int menuMode;
+        BitmapSource thumbnail;
+        string thumbnailPath, fileExtension;
         public Action<Choice> Picked;
         public Radial()
         {
@@ -113,15 +115,28 @@ namespace TangerineWindows
                 var gradient = new LinearGradientBrush(active ? Theme.Orange : Ui.Dark ? Color.FromRgb(58, 64, 70) : Color.FromArgb(232, 255, 249, 240), active ? Color.FromRgb(255, 119, 41) : Ui.Dark ? Color.FromRgb(42, 47, 53) : Color.FromArgb(220, 255, 237, 224), 90);
                 double angle = -90 + i * step;
                 dc.DrawGeometry(gradient, new Pen(active ? Theme.Accent : Theme.Line, 1.4), Segment(angle - step / 2 + 1.7, angle + step / 2 - 1.7));
-                bool tool = new[] { "compress", "metadata", "edit", "annotate", "background", "crop-editor", "redact" }.Contains(Items[i].Id);
+                bool tool = new[] { "compress", "metadata", "edit", "annotate", "background", "crop-editor", "redact", "video-crop" }.Contains(Items[i].Id);
                 Point textAt = Polar(111, angle);
                 if (tool) { Icon(dc, Items[i].Id, new Point(textAt.X, textAt.Y - 9), active ? Brushes.White : Theme.Ink); textAt.Y += 12; }
                 Label(dc, Items[i].Label, textAt, tool ? Ui.Arabic ? 12 : 9.5 : Items[i].Label.Length > 7 ? 10 : 12.5, active ? Brushes.White : Theme.Ink, true);
             }
-            dc.DrawEllipse(Ui.Dark ? Theme.Surface : Theme.Brush("#EFFFFAF4"), new Pen(Theme.Line, 1), new Point(184, 176), 54, 54);
+            dc.DrawEllipse(Ui.Dark ? Theme.Surface : Theme.Brush("#90FFFAF4"), new Pen(Theme.Line, 1), new Point(184, 176), 54, 54);
+            if (HasFiles) {
+                var card = new Rect(159, 139, 50, 59); dc.DrawRoundedRectangle(Brushes.White, new Pen(Theme.Brush("#D1D5D9"), 1), card, 4, 4);
+                if (thumbnail != null) {
+                    double scale = Math.Min(44.0 / thumbnail.PixelWidth, 53.0 / thumbnail.PixelHeight);
+                    double w = thumbnail.PixelWidth * scale, h = thumbnail.PixelHeight * scale;
+                    dc.DrawImage(thumbnail, new Rect(184 - w / 2, 168.5 - h / 2, w, h));
+                } else {
+                    for (int line = 0; line < 3; line++) dc.DrawLine(new Pen(Theme.Brush("#BCC1C6"), 2), new Point(169, 150 + line * 6), new Point(199, 150 + line * 6));
+                    Label(dc, fileExtension ?? "FILE", new Point(184, 182), 10, Theme.Brush("#52585E"), true);
+                }
+            }
             if (!HasFiles) Label(dc, "↧", new Point(184, 161), 27, Theme.Accent, false);
             string center = menuMode == 1 && HasFiles ? Center : Hover >= 0 && Hover < Items.Count ? Items[Hover].Label : Center;
-            Label(dc, center.Length > 16 ? center.Substring(0, 14) + "…" : center, new Point(184, HasFiles ? 176 : 193), center.Length > 11 ? 10 : 12, Theme.Ink, false);
+            if (HasMore && Hover == Items.Count) center = "MORE";
+            if (HasFiles) dc.DrawRoundedRectangle(Ui.Dark ? Theme.Surface : Theme.Brush("#FFF7E3"), new Pen(Theme.Line, .7), new Rect(142, 194, 84, 24), 12, 12);
+            Label(dc, center.Length > 13 ? center.Substring(0, 11) + "…" : center, new Point(184, HasFiles ? 206 : 193), center.Length > 11 ? 9 : 11, Theme.Ink, false);
             string caption = HasMore && Hover == Items.Count ? Ui.T("Open all file tools") : Hover >= 0 && Hover < Items.Count ? Items[Hover].Hint : Caption;
             Label(dc, caption, new Point(184, 354), 11, Theme.Muted, false);
         }
@@ -129,6 +144,13 @@ namespace TangerineWindows
         {
             Items = Catalog.Choices(paths, mode); Hover = -1;
             menuMode = mode; HasFiles = paths.Length > 0; HasMore = mode == 1 && Items.Count > 7;
+            string first = paths.FirstOrDefault();
+            if (first != thumbnailPath) {
+                thumbnailPath = first; thumbnail = null; fileExtension = first == null ? null : Path.GetExtension(first).TrimStart('.').ToUpperInvariant();
+                if (first != null && Catalog.Kind(first) == "image") try {
+                    using (var stream = File.OpenRead(first)) { var bitmap = new BitmapImage(); bitmap.BeginInit(); bitmap.CacheOption = BitmapCacheOption.OnLoad; bitmap.DecodePixelWidth = 90; bitmap.StreamSource = stream; bitmap.EndInit(); bitmap.Freeze(); thumbnail = bitmap; }
+                } catch { }
+            }
             if (HasMore) Items = Items.Take(7).ToList();
             else if (Items.Count > 8) Items = Items.Take(7).Concat(new[] { new Choice("more", "MORE", "Open all file tools") }).ToList();
             long size = 0; foreach (string path in paths) try { size += new FileInfo(path).Length; } catch { }
@@ -142,7 +164,7 @@ namespace TangerineWindows
             dc.PushTransform(new TranslateTransform(center.X, center.Y));
             if (id == "edit") { for (int i = 0; i < 3; i++) { double y = -5 + i * 5; dc.DrawLine(p, new Point(-7, y), new Point(7, y)); dc.DrawEllipse(Theme.Surface, p, new Point(i == 1 ? -3 : 3, y), 1.8, 1.8); } }
             else if (id == "background") { dc.DrawRoundedRectangle(null, p, new Rect(-7, -6, 14, 12), 1, 1); dc.DrawEllipse(null, p, new Point(3, -2), 1.5, 1.5); dc.DrawLine(p, new Point(-6, 5), new Point(-1, -1)); dc.DrawLine(p, new Point(-1, -1), new Point(3, 4)); }
-            else if (id == "crop-editor") { dc.DrawLine(p, new Point(-4, -8), new Point(-4, 4)); dc.DrawLine(p, new Point(-4, 4), new Point(8, 4)); dc.DrawLine(p, new Point(-8, -4), new Point(4, -4)); dc.DrawLine(p, new Point(4, -4), new Point(4, 8)); }
+            else if (id == "crop-editor" || id == "video-crop") { dc.DrawLine(p, new Point(-4, -8), new Point(-4, 4)); dc.DrawLine(p, new Point(-4, 4), new Point(8, 4)); dc.DrawLine(p, new Point(-8, -4), new Point(4, -4)); dc.DrawLine(p, new Point(4, -4), new Point(4, 8)); }
             else if (id == "annotate") { dc.DrawLine(p, new Point(-6, 6), new Point(4, -6)); dc.DrawLine(p, new Point(-3, 7), new Point(7, -5)); dc.DrawLine(p, new Point(4, -6), new Point(7, -5)); dc.DrawLine(p, new Point(-6, 6), new Point(-3, 7)); dc.DrawLine(p, new Point(-6, 6), new Point(-7, 9)); }
             else if (id == "redact") { dc.DrawEllipse(null, p, new Point(0, 0), 8, 4.5); dc.DrawEllipse(null, p, new Point(0, 0), 2.5, 2.5); dc.DrawLine(p, new Point(-6, -7), new Point(6, 7)); }
             else if (id == "metadata") { var g = new StreamGeometry(); using (var c = g.Open()) { c.BeginFigure(new Point(-7, 1), false, true); c.LineTo(new Point(1, -7), true, false); c.LineTo(new Point(7, -7), true, false); c.LineTo(new Point(7, -1), true, false); c.LineTo(new Point(-1, 7), true, false); } dc.DrawGeometry(null, p, g); dc.DrawEllipse(null, p, new Point(4, -4), 1, 1); }
@@ -248,7 +270,7 @@ namespace TangerineWindows
         int mode = 0, completed = 0, currentPage = 0;
         public MainWindow(bool render)
         {
-            Title = "MadarDrop 0.3.1"; Width = 1050; Height = 740; MinWidth = 940; MinHeight = 690;
+            Title = "MadarDrop 0.4.0"; Width = 1050; Height = 740; MinWidth = 940; MinHeight = 690;
             WindowStartupLocation = WindowStartupLocation.CenterScreen; Background = Theme.Paper; Foreground = Theme.Ink;
             FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
             Resources.Add(typeof(Button), ButtonStyle());
@@ -269,7 +291,7 @@ namespace TangerineWindows
             Grid.SetColumn(pages, 1); body.Children.Add(pages);
             BuildConvert(); BuildActivity(); BuildSettings(); SetPage(0);
             var footer = new Grid { Margin = new Thickness(28, 0, 28, 0) }; footer.ColumnDefinitions.Add(new ColumnDefinition()); footer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            engine.VerticalAlignment = VerticalAlignment.Center; footer.Children.Add(engine); var version = Theme.Text("MadarDrop · v0.3.1", 10, Theme.Muted); version.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(version, 1); footer.Children.Add(version); Grid.SetRow(footer, 2); root.Children.Add(footer);
+            engine.VerticalAlignment = VerticalAlignment.Center; footer.Children.Add(engine); var version = Theme.Text("MadarDrop · v0.4.0", 10, Theme.Muted); version.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(version, 1); footer.Children.Add(version); Grid.SetRow(footer, 2); root.Children.Add(footer);
             wheel = new WheelWindow(this);
             watcher = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(25) }; watcher.Tick += Watch;
             cancel.Click += delegate { if (cancellation != null) cancellation.Cancel(); }; cancel.Visibility = Visibility.Collapsed;
@@ -496,27 +518,40 @@ namespace TangerineWindows
             if (choice.Id == "folder") { ShowOutput(p[0]); return; }
             if (choice.Id == "info") { if (!quick) Reveal(); ShowInfo(p); return; }
             var options = new Parameters();
+            if (choice.Id == "video-crop") {
+                try { var dialog = new VideoCropWindow(p[0]); if (!ShowModal(dialog, quick, anchor)) return; options = dialog.Value; }
+                catch (Exception e) { MessageBox.Show(e.Message, Ui.T("Crop Video")); return; }
+            }
             if (new[] { "resize", "crop", "trim", "speed" }.Contains(choice.Id)) { if (!quick) Reveal(); var dialog = new OptionsDialog(choice.Id); if (!ShowModal(dialog, quick, anchor)) return; options = dialog.Value; }
             cancellation = new CancellationTokenSource(); var ct = cancellation.Token;
+            var jobCancellation = cancellation; FloatingJob job = null;
+            if (quick) {
+                job = new FloatingJob(Ui.T("Processing") + " · " + choice.Label, delegate { try { jobCancellation.Cancel(); } catch (ObjectDisposedException) { } });
+                Native.POINT point; if (anchor.HasValue) point = anchor.Value; else Native.GetCursorPos(out point); QuickPopup.Place(job, point); job.Show();
+            }
             progress.Visibility = Visibility.Visible; cancel.Visibility = Visibility.Visible; Ring.IsEnabled = false;
-            int success = 0, failed = 0; string lastOutput = null;
+            int success = 0, failed = 0; string lastOutput = null, failure = null; bool cancelled = false;
             bool grouped = choice.Id == "pdf" || choice.Id == "zip";
             string[][] batches = grouped ? new[] { p } : p.Select(f => new[] { f }).ToArray();
             try {
                 for (int i = 0; i < batches.Length; i++) {
                     ct.ThrowIfCancellationRequested(); string[] batch = batches[i]; int item = i + 1;
                     state.Text = "Processing " + item + " of " + batches.Length + " · " + Path.GetFileName(batch[0]);
+                    if (job != null) job.Report(Path.GetFileName(batch[0]), item, batches.Length, Ui.T("Processing"));
                     try {
-                        string output = await Task.Run(() => choice.Id == "pdf-compress" ? PdfWorker.Save(batch, null, false, "compress", null, ct) : Engine.Convert(batch, choice.Id, options, ct, detail => Dispatcher.BeginInvoke(new Action(delegate { state.Text = item + " / " + batches.Length + " · " + detail; }))));
+                        string output = await Task.Run(() => choice.Id == "pdf-compress" ? PdfWorker.Save(batch, null, false, "compress", null, ct) : Engine.Convert(batch, choice.Id, options, ct, detail => Dispatcher.BeginInvoke(new Action(delegate { state.Text = item + " / " + batches.Length + " · " + detail; if (job != null) job.Report(Path.GetFileName(batch[0]), item, batches.Length, Ui.T(detail)); }))));
                         lastOutput = output; success++; AddHistory(Path.GetFileName(output), DateTime.Now.ToShortTimeString() + " · " + choice.Label + " · " + Path.GetDirectoryName(output), output, true);
                     } catch (OperationCanceledException) { throw; }
-                    catch (Exception e) { failed++; AddHistory(Path.GetFileName(batch[0]), e.Message, null, false); }
+                    catch (Exception e) { failed++; failure = e.Message; AddHistory(Path.GetFileName(batch[0]), e.Message, null, false); }
                 }
                 state.Text = success + " completed" + (failed > 0 ? " · " + failed + " failed — see Activity" : " · Saved beside the original" );
                 if (notify && tray != null) { tray.BalloonTipTitle = "MadarDrop"; tray.BalloonTipText = state.Text; tray.ShowBalloonTip(3000); }
                 if (openFolder && lastOutput != null) ShowOutput(lastOutput);
-            } catch (OperationCanceledException) { state.Text = "Cancelled · " + success + " completed files kept"; }
-            finally { cancellation.Dispose(); cancellation = null; progress.Visibility = Visibility.Collapsed; cancel.Visibility = Visibility.Collapsed; Ring.IsEnabled = true; }
+            } catch (OperationCanceledException) { cancelled = true; state.Text = "Cancelled · " + success + " completed files kept"; }
+            finally {
+                if (job != null) job.Finish(cancelled ? Ui.T("Cancelled") : failed > 0 ? failure : Ui.T("Saved beside the original"), lastOutput, !cancelled && failed == 0);
+                cancellation.Dispose(); cancellation = null; progress.Visibility = Visibility.Collapsed; cancel.Visibility = Visibility.Collapsed; Ring.IsEnabled = true;
+            }
         }
         public void RenderTo(string folder, int page = 0)
         {
@@ -585,6 +620,7 @@ namespace TangerineWindows
             if (args.Length > 1 && args[0] == "--test-editors") return EditorTest.Run(args[1]);
             if (args.Length > 1 && args[0] == "--test-workflow") return WorkflowTest.Run(args[1]);
             if (args.Length > 1 && args[0] == "--test-crop") return CropTests.Run(args[1]);
+            if (args.Length > 1 && args[0] == "--test-video-crop") return VideoCropTests.Run(args[1]);
             if (args.Length > 2 && args[0] == "--test-ui") return UiTests.Run(args[1], args[2]);
             if (args.Length > 2 && args[0] == "--convert") {
                 try { string output = Engine.Convert(args.Skip(2).ToArray(), args[1], new Parameters(), CancellationToken.None, null); File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "last-conversion.txt"), output); return 0; }

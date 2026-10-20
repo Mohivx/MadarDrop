@@ -72,6 +72,7 @@ namespace TangerineWindows
                 }
                 if (kinds.All(k => k == "video" || k == "audio")) r.Add(new Choice("trim", "TRIM", "Keep a section of the recording"));
                 if (kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("speed", "SPEED", "Change playback speed"));
+                if (files.Length == 1 && kinds[0] == "video") r.Add(new Choice("video-crop", "CROP", "Crop video visually with a frame preview"));
                 r.Add(new Choice("info", "INFO", "View file information"));
                 r.Add(new Choice("zip", "ZIP", "Create a ZIP archive"));
                 return r;
@@ -162,7 +163,7 @@ namespace TangerineWindows
             if (operation == "zip") return Zip(files, ct);
             if (operation == "extract") return Extract(files[0], ct);
             string source = files[0], kind = Catalog.Kind(source), ext = "." + operation;
-            bool tool = new[] { "compress", "resize", "crop", "trim", "speed" }.Contains(operation);
+            bool tool = new[] { "compress", "resize", "crop", "trim", "speed", "video-crop" }.Contains(operation);
             if (tool) {
                 ext = kind == "image" ? (Path.GetExtension(source).ToLowerInvariant() == ".jpg" || Path.GetExtension(source).ToLowerInvariant() == ".jpeg" ? ".jpg" : ".webp") : kind == "video" ? ".mp4" : ".mp3";
             }
@@ -192,6 +193,10 @@ namespace TangerineWindows
                             else if (ext == ".gif") a.AddRange(new[] { "-vf", "fps=12,scale=640:-1:flags=lanczos", "-an", "-loop", "0" });
                             else if (ext == ".avi") a.AddRange(new[] { "-c:v", "mpeg4", "-q:v", "4", "-c:a", "libmp3lame" });
                             else a.AddRange(new[] { "-c:v", "libx264", "-preset", "fast", "-crf", operation == "compress" ? "29" : "22", "-pix_fmt", "yuv420p", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", "-c:a", "aac", "-b:a", "160k" });
+                            if (operation == "video-crop") {
+                                if (options.X < 0 || options.Y < 0 || options.CropWidth < 2 || options.CropHeight < 2 || options.CropWidth % 2 != 0 || options.CropHeight % 2 != 0) throw new ArgumentException("Choose a crop of at least 2 × 2 pixels with even dimensions.");
+                                int filter = a.IndexOf("-vf"); a[filter + 1] = string.Format(Inv, "crop={0}:{1}:{2}:{3}:exact=1,setsar=1", options.CropWidth, options.CropHeight, options.X, options.Y);
+                            }
                             if (ext == ".mp4" || ext == ".mov") a.AddRange(new[] { "-movflags", "+faststart" });
                         }
                         if (operation == "speed") {

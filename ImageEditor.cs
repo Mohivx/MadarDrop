@@ -183,9 +183,14 @@ namespace TangerineWindows
         public string Output;
         public bool ToolOnly { get; private set; }
         Grid layoutRoot;
+        Grid editorBody;
+        Border previewBoard, controlsPanel;
+        StackPanel headerButtons;
+        Button saveCopy;
         StackPanel modeTabs;
         TextBlock heading;
         readonly string sourcePath;
+        readonly BitmapSource initialSource;
         readonly Image image = new Image { Stretch = Stretch.Fill, IsHitTestVisible = false };
         readonly Canvas canvas = new Canvas { Background = Brushes.Transparent, ClipToBounds = true };
         readonly StackPanel controls = new StackPanel { Margin = new Thickness(18) };
@@ -201,27 +206,29 @@ namespace TangerineWindows
         public ImageEditor(string path, string sectionName, BitmapSource custom = null)
         {
             Resources.Add(typeof(Button), MainWindow.ButtonStyle());
-            sourcePath = path; Model = new ImageState { Source = custom ?? ImageEdits.Load(path) };
+            sourcePath = path; Model = new ImageState { Source = custom ?? ImageEdits.Load(path) }; initialSource = Model.Source;
             Title = "Edit · " + System.IO.Path.GetFileName(path); Width = 1160; Height = 800; MinWidth = 920; MinHeight = 650;
             WindowStartupLocation = WindowStartupLocation.CenterOwner; FontFamily = new FontFamily("Segoe UI"); Background = Theme.Paper;
             var root = new Grid { Background = Theme.Paper }; layoutRoot = root; root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(76) }); root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(54) }); root.RowDefinitions.Add(new RowDefinition()); root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(42) }); Content = root;
             var top = new Grid { Margin = new Thickness(24, 0, 18, 0) }; top.ColumnDefinitions.Add(new ColumnDefinition()); top.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center }; heading = Theme.Text("Make it your own.", 23, Theme.Ink, FontWeights.SemiBold); title.Children.Add(heading); title.Children.Add(Theme.Text(System.IO.Path.GetFileName(path), 11, Theme.Muted)); top.Children.Add(title);
-            var buttons = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+            var buttons = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center }; headerButtons = buttons;
             AddButton(buttons, "Undo", delegate { Undo(false); }); AddButton(buttons, "Redo", delegate { Undo(true); });
             AddButton(buttons, "Reset", delegate { Remember(); Model = new ImageState { Source = ImageEdits.Load(sourcePath) }; SetSection(section); UpdatePreview(); });
             format.Items.Add("PNG"); format.Items.Add("JPG"); format.SelectedIndex = 0; format.Width = 70; format.Margin = new Thickness(4, 0, 8, 0); format.VerticalContentAlignment = VerticalAlignment.Center; buttons.Children.Add(format);
-            var save = Theme.Button("Save a copy", true); save.Click += delegate {
+            var save = Theme.Button("Save a copy", true); saveCopy = save; save.Click += delegate {
                 try { Output = ImageEdits.Save(Model, sourcePath, (string)format.SelectedItem); DialogResult = true; } catch (Exception e) { MessageBox.Show(this, e.Message, "Could not save", MessageBoxButton.OK, MessageBoxImage.Error); }
             }; buttons.Children.Add(save); Grid.SetColumn(buttons, 1); top.Children.Add(buttons); root.Children.Add(top);
             var tabs = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(24, 4, 0, 8) }; modeTabs = tabs;
             string[] names = { "Adjust", "Annotate", "Redact", "Background", "Crop & rotate" }; string[] ids = { "edit", "annotate", "redact", "background", "crop" };
             for (int i = 0; i < names.Length; i++) { string id = ids[i]; AddButton(tabs, names[i], delegate { SetSection(id); }); } Grid.SetRow(tabs, 1); root.Children.Add(tabs);
-            var body = new Grid { Margin = new Thickness(18, 0, 18, 0) }; body.ColumnDefinitions.Add(new ColumnDefinition()); body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(278) }); Grid.SetRow(body, 2); root.Children.Add(body);
+            var body = new Grid { Margin = new Thickness(18, 0, 18, 0) }; editorBody = body; body.ColumnDefinitions.Add(new ColumnDefinition()); body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(278) }); Grid.SetRow(body, 2); root.Children.Add(body);
             var board = new Border { CornerRadius = new CornerRadius(14), Background = Checker(), Padding = new Thickness(22), Margin = new Thickness(0, 0, 14, 0), ClipToBounds = true };
+            previewBoard = board;
             canvas.Children.Add(image); canvas.Children.Add(selection); selection.Visibility = Visibility.Collapsed;
             board.Child = new Viewbox { Child = canvas, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.Both }; body.Children.Add(board);
             var panel = Theme.Card(new ScrollViewer { Content = controls, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }); Grid.SetColumn(panel, 1); body.Children.Add(panel);
+            controlsPanel = panel;
             status.Margin = new Thickness(25, 0, 0, 0); status.VerticalAlignment = VerticalAlignment.Center; Grid.SetRow(status, 3); root.Children.Add(status);
             refresh = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(80) }; refresh.Tick += delegate { refresh.Stop(); UpdatePreview(); };
             canvas.MouseLeftButtonDown += BeginMark; canvas.MouseMove += MoveMark; canvas.MouseLeftButtonUp += EndMark;
@@ -243,9 +250,24 @@ namespace TangerineWindows
         }
         public void FocusTool(string id)
         {
-            ToolOnly = true; modeTabs.Visibility = Visibility.Collapsed; layoutRoot.RowDefinitions[1].Height = new GridLength(0); Width = 900; Height = 650; MinWidth = 800; MinHeight = 520;
+            if (ToolOnly) return;
+            ToolOnly = true; Width = 450; Height = 730; MinWidth = 390; MinHeight = 540;
             string name = id == "annotate" ? "Annotate photo" : id == "redact" ? "Redact photo" : id == "background" ? "Add background" : "Edit photo";
-            Title = name; heading.Text = name; heading.FontSize = 20; Ui.Apply(this);
+            Title = name;
+            editorBody.Children.Clear(); headerButtons.Children.Remove(format); headerButtons.Children.Remove(saveCopy);
+            var body = new Grid { Margin = new Thickness(14, 8, 14, 0) };
+            body.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star), MinHeight = 160 });
+            body.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star), MinHeight = 145 });
+            previewBoard.Margin = new Thickness(0, 0, 0, 8); previewBoard.Padding = new Thickness(10); body.Children.Add(previewBoard);
+            Grid.SetColumn(controlsPanel, 0); Grid.SetRow(controlsPanel, 1); controls.Margin = new Thickness(12, 4, 12, 10); body.Children.Add(controlsPanel);
+            var footer = new Grid(); footer.ColumnDefinitions.Add(new ColumnDefinition()); footer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var history = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+            AddButton(history, "↶", delegate { Undo(false); }); AddButton(history, "↷", delegate { Undo(true); });
+            foreach (Button b in history.Children) { b.Padding = new Thickness(7, 4, 7, 4); b.MinHeight = 26; b.ToolTip = Ui.T(b.Content.ToString() == "↶" ? "Undo" : "Redo"); }
+            var reset = Theme.Button("Reset", false); reset.Padding = new Thickness(5, 4, 5, 4); reset.MinHeight = 26; reset.FontSize = 11; reset.Click += delegate { Remember(); Model = new ImageState { Source = initialSource }; SetSection(section); UpdatePreview(); }; history.Children.Add(reset);
+            footer.Children.Add(history);
+            var output = new StackPanel { Orientation = Orientation.Horizontal }; format.Height = 29; format.Width = 64; output.Children.Add(format); saveCopy.Padding = new Thickness(10, 6, 10, 6); saveCopy.MinHeight = 29; output.Children.Add(saveCopy); Grid.SetColumn(output, 1); footer.Children.Add(output);
+            ToolFrame.Build(this, name, body, footer); Ui.Apply(this);
         }
         void AddButton(Panel panel, string title, Action action) { var b = Theme.Button(title, false); b.Padding = new Thickness(12, 8, 12, 8); b.MinHeight = 31; b.Click += delegate { action(); }; panel.Children.Add(b); }
         void Header(string title, string detail) { controls.Children.Add(Theme.Text(title, 18, Theme.Ink, FontWeights.SemiBold)); var d = Theme.Text(detail, 11, Theme.Muted); d.LineHeight = 18; d.Margin = new Thickness(0, 9, 0, 16); controls.Children.Add(d); }

@@ -15,19 +15,25 @@ namespace TangerineWindows
     }
     public static class Brand
     {
-        static readonly Geometry Body = Geometry.Parse("M 10,47 C 17,46 16,37 27,30 C 45,18 68,23 78,37 C 81,41 81,45 88,46 Q 96,50 88,54 C 81,55 82,63 73,69 C 54,83 31,77 21,64 C 17,60 17,55 10,54 Q 3,51 10,47 Z");
-        static readonly Geometry Leaf = Geometry.Parse("M 53,25 C 49,12 59,4 76,7 C 75,21 65,29 53,25 Z");
-        static readonly Geometry Shine = Geometry.Parse("M 26,41 C 34,31 47,29 56,32");
+        static Point Slice(double r, double angle) { double a = angle * Math.PI / 180; return new Point(50 + r * Math.Cos(a), 50 + r * Math.Sin(a)); }
         public static void Draw(DrawingContext dc, Rect bounds) {
             dc.PushTransform(new TranslateTransform(bounds.X, bounds.Y));
             dc.PushTransform(new ScaleTransform(bounds.Width / 100, bounds.Height / 100));
-            dc.PushTransform(new TranslateTransform(4, 4)); dc.PushTransform(new ScaleTransform(.92, .92));
-            dc.PushTransform(new RotateTransform(-28, 50, 50));
-            dc.DrawGeometry(new LinearGradientBrush(Color.FromRgb(255, 233, 112), Color.FromRgb(246, 191, 27), 85), new Pen(new SolidColorBrush(Color.FromRgb(218, 162, 27)), 1.5), Body);
-            dc.DrawGeometry(null, new Pen(new SolidColorBrush(Color.FromArgb(200, 255, 252, 202)), 4) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, Shine);
-            dc.DrawGeometry(new LinearGradientBrush(Color.FromRgb(111, 169, 70), Color.FromRgb(58, 126, 55), 90), null, Leaf);
-            dc.DrawLine(new Pen(new SolidColorBrush(Color.FromRgb(69, 114, 42)), 1.6), new Point(53, 27), new Point(67, 13));
-            dc.Pop(); dc.Pop(); dc.Pop(); dc.Pop(); dc.Pop();
+            dc.DrawRoundedRectangle(new LinearGradientBrush(Colors.White, Color.FromRgb(235, 237, 233), 90), new Pen(new SolidColorBrush(Color.FromRgb(224, 227, 219)), .8), new Rect(3, 3, 94, 94), 23, 23);
+            for (int i = 0; i < 8; i++) {
+                double start = i * 45 - 105, end = start + 39;
+                var g = new StreamGeometry(); using (var c = g.Open()) {
+                    c.BeginFigure(Slice(10, start), true, true);
+                    c.LineTo(Slice(34, start), true, false);
+                    c.QuadraticBezierTo(Slice(39, start), Slice(39, start + 7), true, false);
+                    c.ArcTo(Slice(39, end - 7), new Size(39, 39), 0, false, SweepDirection.Clockwise, true, false);
+                    c.QuadraticBezierTo(Slice(39, end), Slice(34, end), true, false);
+                    c.LineTo(Slice(10, end), true, false);
+                    c.QuadraticBezierTo(Slice(4, (start + end) / 2), Slice(10, start), true, false);
+                }
+                dc.DrawGeometry(new LinearGradientBrush(Color.FromRgb(255, (byte)(226 + i % 3 * 7), 93), Color.FromRgb(250, 190, 28), i * 45 + 90), new Pen(new SolidColorBrush(Color.FromRgb(255, 222, 65)), .8), g);
+            }
+            dc.Pop(); dc.Pop();
         }
         public static BitmapSource Raster(int size) {
             var visual = new DrawingVisual(); using (var dc = visual.RenderOpen()) Draw(dc, new Rect(0, 0, size, size));

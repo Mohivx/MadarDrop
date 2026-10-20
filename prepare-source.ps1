@@ -7,11 +7,11 @@ $taskTop += @(Get-ChildItem -LiteralPath $taskRoot -Filter '*.cs' -File | Select
 foreach ($taskName in $taskTop) { Copy-Item -LiteralPath (Join-Path $taskRoot $taskName) -Destination $taskSource -Force }
 foreach ($taskDirectory in @('updater','docs','assets','branding','.github\workflows')) { New-Item -ItemType Directory -Path (Join-Path $taskSource $taskDirectory) -Force | Out-Null }
 foreach ($taskName in @('UpdateCore.cs','SetupSupport.cs','Setup.cs','Maintenance.cs','UpdateTests.cs','LegacyFixture.cs','build-setup.ps1')) { Copy-Item -LiteralPath (Join-Path $taskRoot ('updater\' + $taskName)) -Destination (Join-Path $taskSource 'updater') -Force }
-foreach ($taskName in @('VALIDATION.md','REFERENCE.ar.md','tools-ar-dark.png','crop-ar-dark.png','main-en-light.png','settings-ar-dark.png','main-ar-light.png','tools-ar-light.png')) { Copy-Item -LiteralPath (Join-Path $taskRoot ('docs\' + $taskName)) -Destination (Join-Path $taskSource 'docs') -Force }
+foreach ($taskName in @('VALIDATION.md','REFERENCE.ar.md','tools-ar-dark.png','crop-ar-dark.png','main-en-light.png','settings-ar-dark.png','main-ar-light.png','tools-ar-light.png','video-crop-en-light.png','compact-edit-en-light.png','floating-progress-ar-dark.png')) { Copy-Item -LiteralPath (Join-Path $taskRoot ('docs\' + $taskName)) -Destination (Join-Path $taskSource 'docs') -Force }
 foreach ($taskName in @('lemon.svg','MadarDrop.ico','lemon-preview.png')) { Copy-Item -LiteralPath (Join-Path $taskRoot ('assets\' + $taskName)) -Destination (Join-Path $taskSource 'assets') -Force }
 foreach ($taskName in @('BrandBuilder.cs','build-brand.ps1')) { Copy-Item -LiteralPath (Join-Path $taskRoot ('branding\' + $taskName)) -Destination (Join-Path $taskSource 'branding') -Force }
 Copy-Item -LiteralPath (Join-Path $taskRoot '.github\workflows\build.yml') -Destination (Join-Path $taskSource '.github\workflows\build.yml') -Force
-$taskArchive = Join-Path $taskRoot 'MadarDrop-Source-0.3.1.zip'
+$taskArchive = Join-Path $taskRoot 'MadarDrop-Source-0.4.0.zip'
 if (Test-Path -LiteralPath $taskArchive) { Remove-Item -LiteralPath $taskArchive }
 Add-Type -AssemblyName System.IO.Compression
 $taskZipStream = [System.IO.File]::Open($taskArchive, [System.IO.FileMode]::CreateNew)
@@ -25,7 +25,7 @@ try {
         try { $taskInput.CopyTo($taskOutput) } finally { $taskInput.Dispose(); $taskOutput.Dispose() }
     }
 } finally { $taskZip.Dispose(); $taskZipStream.Dispose() }
-$taskAssets = @('MadarDrop-Setup-0.3.1.exe', 'MadarDrop-Source-0.3.1.zip')
+$taskAssets = @('MadarDrop-Setup-0.4.0.exe', 'MadarDrop-Source-0.4.0.zip')
 $taskHashes = foreach ($taskName in $taskAssets) { (Get-FileHash -LiteralPath (Join-Path $taskRoot $taskName) -Algorithm SHA256).Hash.ToLower() + '  ' + $taskName }
 [System.IO.File]::WriteAllLines((Join-Path $taskRoot 'SHA256SUMS.txt'), $taskHashes, [System.Text.UTF8Encoding]::new($false))
 Write-Output $taskSource

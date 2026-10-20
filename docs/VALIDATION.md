@@ -1,5 +1,24 @@
 # MadarDrop release validation
 
+## 0.4.0 — visual video crop and floating tools
+
+20 October 2026: local application suites passed: 40 conversion, 31 editor, 8 workflow,
+17 image crop, 11 language/appearance, 10 release and 18 video/workflow checks.
+The new media suite creates its own Unicode-named video with sound and a silent variant.
+It decodes the crop to verify dimensions and region content within lossy-encoding tolerance,
+checks audio/duration and source hashes, tests cancellation during processing and temporary-file
+cleanup, and renders the compact tool and progress windows in both appearances/languages.
+No ffprobe installation is required. Media tests use the existing local FFmpeg, which is not
+included in the public package. CI also runs the non-media progress and compact-tool checks.
+
+Installer/update suites passed 11 full-package and 17 rollback/long-path checks, including upgrading
+the actual 0.3.1 executable in an isolated folder. Together the local suites passed 163 checks.
+
+The official 22.5-second demo was watched with frame seeking; observations and differences are
+recorded in REFERENCE.ar.md. Screenshots here are self-rendered from our WPF windows, not copied
+from the original. Live Explorer drag/drop automation remains unperformed under the user's
+preference to keep the existing test approach. The original product was not run on macOS.
+
 ## 0.3.1 — lemon mark and orange appearance
 
 19 October 2026: the existing 11 language/appearance checks and 11 full installer checks passed,
