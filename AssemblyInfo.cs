@@ -1,5 +1,5 @@
-﻿using System.Reflection;
+using System.Reflection;
 [assembly: AssemblyTitle("MadarDrop")]
 [assembly: AssemblyDescription("Local file conversion and editing tools")]
-[assembly: AssemblyVersion("0.4.1.0")]
-[assembly: AssemblyFileVersion("0.4.1.0")]
+[assembly: AssemblyVersion("0.4.2.0")]
+[assembly: AssemblyFileVersion("0.4.2.0")]

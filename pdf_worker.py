@@ -3,7 +3,215 @@ import json
 import sys
 from pathlib import Path
 
+EXPORT_FORMATS = {"jpg": ("JPEG", ".jpg"), "png": ("PNG", ".png"), "pdf-split": ("PDF", ".pdf")}
+EXPORT_DPI = 300
+EXPORT_MAX_PAGES = 300
+EXPORT_MAX_PIXELS = 64_000_000
+EXPORT_MAX_SIDE = 65_000
+DAMAGED_PDF = "This PDF is damaged or incomplete and could not be read."
+ENCRYPTED_PDF = "Password-protected PDFs must be unlocked before exporting pages."
+
+
+def _save_raster(image, stream, fmt):
+    """Write an RGB raster on a white background; JPG at quality 95, both tagged 300 DPI."""
+    from PIL import Image
+    converted = None
+    try:
+        if image.mode != "RGB":
+            if image.mode in ("RGBA", "LA", "PA") or (image.mode == "P" and "transparency" in image.info):
+                rgba = image.convert("RGBA")
+                try:
+                    converted = Image.new("RGB", rgba.size, (255, 255, 255))
+                    converted.paste(rgba, mask=rgba.getchannel("A"))
+                finally:
+                    rgba.close()
+            else:
+                converted = image.convert("RGB")
+        target = converted if converted is not None else image
+        if fmt == "jpg":
+            target.save(stream, format="JPEG", quality=95, subsampling=0, dpi=(EXPORT_DPI, EXPORT_DPI))
+        else:
+            target.save(stream, format="PNG", dpi=(EXPORT_DPI, EXPORT_DPI), compress_level=6)
+    finally:
+        if converted is not None:
+            converted.close()
+
+
+def _render_page(document, index, target, fmt, scale, expected):
+    from PIL import Image
+    page = document[index]
+    bitmap = None
+    image = None
+    try:
+        bitmap = page.render(scale=scale)
+        image = bitmap.to_pil()
+        width, height = image.size
+        if abs(width - expected[0]) > 2 or abs(height - expected[1]) > 2 or width < 1 or height < 1 \
+                or width > EXPORT_MAX_SIDE or height > EXPORT_MAX_SIDE or width * height > EXPORT_MAX_PIXELS:
+            raise ValueError(f"Page {index + 1} rendered at an unexpected size.")
+        with open(target, "xb") as stream:
+            _save_raster(image, stream, fmt)
+    finally:
+        # Release the PIL view first, then the native bitmap and page, before the next page starts.
+        if image is not None:
+            image.close()
+        if bitmap is not None:
+            bitmap.close()
+        page.close()
+        image = bitmap = page = None
+    with Image.open(target) as check:
+        if check.size != (width, height) or check.format != EXPORT_FORMATS[fmt][0]:
+            raise ValueError(f"Page {index + 1} could not be written correctly.")
+    return {"file": target.name, "width": width, "height": height}
+
+
+def _split_page(reader, index, target, metadata):
+    from pypdf import PdfReader, PdfWriter
+    source_page = reader.pages[index]
+    rotation = int(source_page.get("/Rotate", 0)) % 360
+    writer = PdfWriter()
+    try:
+        writer.add_page(source_page)
+        if metadata:
+            writer.add_metadata(metadata)
+        with open(target, "xb") as stream:
+            writer.write(stream)
+    finally:
+        writer.close()
+    check = PdfReader(str(target))
+    try:
+        if len(check.pages) != 1 or int(check.pages[0].get("/Rotate", 0)) % 360 != rotation:
+            raise ValueError(f"Page {index + 1} could not be written correctly.")
+        check.pages[0].mediabox
+    finally:
+        check.close()
+    return {"file": target.name, "rotation": rotation}
+
+
+def export_pages(request):
+    """Export every page of one PDF as 300 DPI JPG/PNG images or as one standalone PDF per page."""
+    import math
+    import os
+    from pypdf import PdfReader
+    import pypdfium2 as pdfium
+    fmt = request.get("format")
+    if not isinstance(fmt, str) or fmt not in EXPORT_FORMATS:
+        raise ValueError("Choose JPG, PNG, or split PDF pages.")
+    files = request.get("files")
+    if not isinstance(files, list) or len(files) != 1 or not isinstance(files[0], str) or not files[0]:
+        raise ValueError("Choose exactly one PDF to export.")
+    output = request.get("output")
+    if not isinstance(output, str) or not output:
+        raise ValueError("An export folder is required.")
+    output = Path(output)
+    if not output.is_dir() or any(output.iterdir()):
+        raise ValueError("The export folder must be a new, empty folder.")
+    progress_path = request.get("progress_file")
+    if progress_path is not None and (not isinstance(progress_path, str) or not progress_path):
+        raise ValueError("The progress file is invalid.")
+    source = Path(files[0])
+    if not source.is_file():
+        raise ValueError("The PDF could not be found.")
+    if source.stat().st_size == 0:
+        raise ValueError("This PDF is empty.")
+    with open(source, "rb") as stream:
+        head = stream.read(1024)
+    if b"%PDF-" not in head:
+        raise ValueError("This file is not a valid PDF.")
+    extension = EXPORT_FORMATS[fmt][1]
+    reader = None
+    document = None
+    progress = None
+    try:
+        # Validate everything (encryption, page count, every page size) before generating any file.
+        try:
+            reader = PdfReader(str(source))
+            encrypted = reader.is_encrypted
+        except Exception:
+            raise ValueError(DAMAGED_PDF) from None
+        if encrypted:
+            raise ValueError(ENCRYPTED_PDF)
+        try:
+            count = len(reader.pages)
+        except Exception:
+            raise ValueError(DAMAGED_PDF) from None
+        if count < 1:
+            raise ValueError("This PDF has no pages.")
+        if count > EXPORT_MAX_PAGES:
+            raise ValueError(f"This PDF has {count} pages; page export supports up to {EXPORT_MAX_PAGES} pages.")
+        try:
+            document = pdfium.PdfDocument(str(source))
+            pdfium_count = len(document)
+        except Exception:
+            raise ValueError(DAMAGED_PDF) from None
+        if pdfium_count != count:
+            raise ValueError(DAMAGED_PDF)
+        # Slightly below 300/72 so exact sizes (e.g. 288 pt -> 1200 px) never round up by float error.
+        scale = EXPORT_DPI / 72 * (1 - 1e-12)
+        sizes = []
+        scales = []
+        for index in range(count):
+            try:
+                page = document[index]
+            except Exception:
+                raise ValueError(DAMAGED_PDF) from None
+            try:
+                width, height = page.get_size()
+            finally:
+                page.close()
+            if not (math.isfinite(width) and math.isfinite(height)) or width <= 0 or height <= 0:
+                raise ValueError(f"Page {index + 1} has invalid dimensions.")
+            unit = float(reader.pages[index].get("/UserUnit", 1))
+            if not math.isfinite(unit) or unit <= 0:
+                raise ValueError(f"Page {index + 1} has invalid physical units.")
+            page_scale = scale * unit
+            pixels_w, pixels_h = math.ceil(width * page_scale), math.ceil(height * page_scale)
+            if fmt != "pdf-split" and (pixels_w > EXPORT_MAX_SIDE or pixels_h > EXPORT_MAX_SIDE or pixels_w * pixels_h > EXPORT_MAX_PIXELS):
+                raise ValueError(f"Page {index + 1} is too large to export at {EXPORT_DPI} DPI "
+                                 f"({pixels_w} x {pixels_h} pixels; the limit is 64 megapixels per page).")
+            sizes.append((max(1, pixels_w), max(1, pixels_h)))
+            scales.append(page_scale)
+        metadata = {}
+        if fmt == "pdf-split":
+            try:
+                for page in reader.pages:
+                    int(page.get("/Rotate", 0))
+                    page.mediabox
+            except Exception:
+                raise ValueError(DAMAGED_PDF) from None
+            try:
+                metadata = {str(k): str(v) for k, v in (reader.metadata or {}).items() if isinstance(v, (str, int, float))}
+            except Exception:
+                metadata = {}
+        if progress_path:
+            progress = open(progress_path, "x", encoding="utf-8", newline="\n")
+        names = []
+        pages = []
+        for index in range(count):
+            name = f"page-{index + 1:03d}{extension}"
+            target = output / name
+            if fmt == "pdf-split":
+                pages.append(_split_page(reader, index, target, metadata))
+            else:
+                pages.append(_render_page(document, index, target, fmt, scales[index], sizes[index]))
+            names.append(name)
+            if progress is not None:
+                progress.write(json.dumps({"done": index + 1, "total": count, "file": name}) + "\n")
+                progress.flush()
+                os.fsync(progress.fileno())
+        return {"format": fmt, "page_count": count, "files": names, "pages": pages}
+    finally:
+        if progress is not None:
+            progress.close()
+        if document is not None:
+            document.close()
+        if reader is not None:
+            reader.close()
+
+
 def main(request):
+    if request.get("operation") == "export-pages":
+        return export_pages(request)
     from pypdf import PdfReader, PdfWriter
     op = request["operation"]
     if op == "verify":

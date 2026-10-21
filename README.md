@@ -5,20 +5,24 @@ Arabic and English. Light and dark appearance. Independent community project.
 
 <img src="assets/lemon-preview.png" alt="MadarDrop lemon mark" width="96" />
 
-0.4.1 adds **MUTE** for video and replaces the larger progress panel with a compact conversion popup:
-operation title, filename/saved count and a thin proportional progress bar. Media progress uses
-actual processed time; files with unknown duration advance when saved. The wheel center now shows
-the hovered action. [Review of three reference videos](docs/VIDEO-REVIEW-2026-10-21.ar.md) records
-the observed behavior and remaining gaps. Visual video crop, focused photo tools and the yellow
-citrus icon remain available.
+0.4.2 adds **PDF to JPG/PNG at 300 DPI**, one-document-per-page PDF splitting,
+and a compact **video snapshots** window with a timeline, selected-frame thumbnails and
+full-resolution PNG exports. Results go into a new sibling folder; originals and previous
+outputs remain intact. Arabic/English and light/dark appearance are supported.
+
+MUTE, visual video crop and compact conversion progress remain available.
+[Reference review](docs/VIDEO-REVIEW-2026-10-21.ar.md) and
+[0.4.2 implementation notes](docs/EXPORTS-0.4.2.ar.md) explain the behavior and remaining gaps.
 
 **[Download for Windows](https://github.com/Mohivx/MadarDrop/releases/latest)** · [العربية](README.ar.md)
 
 ![MadarDrop tools wheel](docs/tools-ar-dark.png)
 
+<img src="docs/snapshots-en-light.png" alt="Video snapshots window" width="280" />
+
 ## Install or update
 
-Windows 10/11 **x64**, .NET Framework **4.8**. Run `MadarDrop-Setup-0.4.1.exe` from Releases.
+Windows 10/11 **x64**, .NET Framework **4.8**. Run `MadarDrop-Setup-0.4.2.exe` from Releases.
 The installer detects registered installations, running legacy previews, and adjacent portable
 preview folders. It offers **Update**, **Repair**, or a fresh per-user **Install**. You can select
 an existing folder manually. No administrator privileges are needed. Updates stay in the same folder,
@@ -49,23 +53,27 @@ progress appears near the drop, with cancellation and an output link; errors sta
 **MUTE** removes audio without re-encoding the video. It keeps the source container and non-audio
 tracks, writes a new `(muted)` copy and leaves the original intact. The popup close control cancels
 an active operation; clicking its saved message shows the result in Explorer.
+For PDFs, choose JPG or PNG from the format wheel; **Tools → SPLIT** saves each page as a PDF.
+For a single video, **Tools → SNAPSHOT** opens the preview. Move the timeline, add frames, remove
+unwanted thumbnails and save up to 50 selected frames as PNGs. Frame buttons use the stream frame rate;
+variable-rate recordings may repeat or skip a frame when stepping.
 Open the main app from its tray icon for preferences. **Check for updates** in Settings manually
 checks this repository's latest stable release and opens its download page.
 
 - Image conversion; crop, resize, rotation, adjustments, drawing, text, backgrounds and collage.
 - Flattened image redaction with solid covers or pixelation; exports do not carry original EXIF.
-- PDF thumbnails, reorder, rotate, duplicate, delete, combine and stream compression.
+- PDF pages to JPG/PNG at 300 DPI; split each page into its own PDF; thumbnails, reorder, rotate, duplicate, delete, combine and stream compression.
 - Image/PDF metadata inspection, editing and stripping.
-- Audio/video conversion, compression, numeric trimming, visual video crop and speed changes using FFmpeg.
+- Audio/video conversion, compression, mute, numeric trimming, visual video crop, selected-frame PNG snapshots and speed changes using FFmpeg.
 - Subtitles, text/DOCX, CSV/TSV/XLSX values, ZIP creation/extraction and file actions.
 
 ## Limits
 
-This is a **0.4.1 preview**, not feature parity with any commercial app. No OCR, PDF-to-Office,
+This is a **0.4.2 preview**, not feature parity with any commercial app. No OCR, PDF-to-Office,
 PDF page-text editing, face detection, advanced timeline editor, RAR/TAR/GZIP, nearby sharing
 or floating file shelf. Encrypted PDFs must be unlocked first. Editing invalidates document
 signatures. Image editing exports a still image (up to 64 megapixels); animated metadata editing
-is rejected to avoid losing frames. The PDF editor supports up to 300 pages per session. Spreadsheet
+is rejected to avoid losing frames. PDF editing and exports support up to 300 pages per session; rendered pages are limited to 64 megapixels each. Spreadsheet
 conversions preserve values rather than full workbook formatting and formulas. Notification and
 open-folder preferences are session-only. The installer is unsigned.
 
@@ -80,7 +88,7 @@ python -m pip install -r requirements-build.txt
 .\updater\build-setup.ps1
 ```
 
-Output: `MadarDrop-Setup-0.4.1.exe`. Keep `runtime` beside the uninstalled app build.
+Output: `MadarDrop-Setup-0.4.2.exe`. Keep `runtime` beside the uninstalled app build.
 `build.ps1 -IncludeMedia` is for local experiments; the public setup builder refuses payloads
 containing `ffmpeg.exe`. See [THIRD-PARTY.txt](THIRD-PARTY.txt).
 
@@ -91,13 +99,15 @@ indicate an official relationship with Tangerine.
 ## Verify
 
 ```powershell
-.\release-0.4.1\TangerineWindows.exe --self-test C:\Temp\MadarDrop-core-new
-.\release-0.4.1\TangerineWindows.exe --test-editors C:\Temp\MadarDrop-editors-new
-.\release-0.4.1\TangerineWindows.exe --test-workflow C:\Temp\MadarDrop-workflow-new
-.\release-0.4.1\TangerineWindows.exe --test-crop C:\Temp\MadarDrop-crop-new
-.\release-0.4.1\TangerineWindows.exe --test-video-crop C:\Temp\MadarDrop-video-new
-.\release-0.4.1\TangerineWindows.exe --test-mute C:\Temp\MadarDrop-mute-new
-.\MadarDrop-Setup-0.4.1.exe --test-package C:\Temp\MadarDrop-setup-new
+.\release-0.4.2\TangerineWindows.exe --self-test C:\Temp\MadarDrop-core-new
+.\release-0.4.2\TangerineWindows.exe --test-editors C:\Temp\MadarDrop-editors-new
+.\release-0.4.2\TangerineWindows.exe --test-workflow C:\Temp\MadarDrop-workflow-new
+.\release-0.4.2\TangerineWindows.exe --test-crop C:\Temp\MadarDrop-crop-new
+.\release-0.4.2\TangerineWindows.exe --test-video-crop C:\Temp\MadarDrop-video-new
+.\release-0.4.2\TangerineWindows.exe --test-mute C:\Temp\MadarDrop-mute-new
+.\release-0.4.2\TangerineWindows.exe --test-pdf-export C:\Temp\MadarDrop-pdf-export-new
+.\release-0.4.2\TangerineWindows.exe --test-snapshot C:\Temp\MadarDrop-snapshot-new
+.\MadarDrop-Setup-0.4.2.exe --test-package C:\Temp\MadarDrop-setup-new
 ```
 
 Each test requires a new directory. Media tests require FFmpeg on PATH or beside the build.

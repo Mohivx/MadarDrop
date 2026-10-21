@@ -65,6 +65,7 @@ namespace TangerineWindows
         // The caller passes the success count; after an earlier failed item that is lower than the finished item, so use whichever is further.
         public void Saved(int completed) { if (complete || cancelling) return; progress.IsIndeterminate = false; progress.Value = 100.0 * Math.Min(total, Math.Max(completed, current)) / total; }
         public static double? Fraction(string message, double duration) {
+            if (message != null && message.StartsWith("Page ")) { var pageParts = message.Split(' '); int done, count; if (pageParts.Length == 4 && pageParts[2] == "of" && int.TryParse(pageParts[1], out done) && int.TryParse(pageParts[3], out count) && done >= 0 && count > 0 && done <= count) return (double)done / count; return null; }
             if (duration <= 0 || message == null || !message.StartsWith("Processed ")) return null;
             // ffmpeg writes out_time as [-]H:MM:SS.ffffff with unbounded hours; TimeSpan rejects hours above 23.
             string value = message.Substring(10).Trim(); bool negative = value.StartsWith("-"); string[] parts = value.TrimStart('-').Split(':'); double hours, minutes, seconds;
@@ -72,10 +73,11 @@ namespace TangerineWindows
             if (parts.Length != 3 || !double.TryParse(parts[0], style, culture, out hours) || !double.TryParse(parts[1], style, culture, out minutes) || !double.TryParse(parts[2], style, culture, out seconds)) return null;
             return negative ? 0 : Math.Max(0, Math.Min(1, (hours * 3600 + minutes * 60 + seconds) / duration));
         }
-        public void Finish(string message, string output, bool success) {
+        public void Finish(string message, string output, bool success, int savedFiles = 0) {
             bool wasCancelled = !success && (message == "Cancelled" || message == "أُلغي");
             complete = true; progress.IsIndeterminate = false; progress.Value = success ? 100 : 0; close.ToolTip = Ui.T("Close"); result = output;
-            file.Text = success ? Ui.Arabic ? "حُفظ " + total + " من " + total : total + " of " + total + " saved" : message;
+            int saved = savedFiles > 0 ? savedFiles : total;
+            file.Text = success ? Ui.Arabic ? "حُفظ " + saved + " من " + saved : saved + " of " + saved + " saved" : message;
             file.ToolTip = output == null ? message : Ui.T("Show result"); if (output != null) file.Cursor = Cursors.Hand;
             if (!success && !wasCancelled) { file.Text = Ui.T("Could not complete"); detail.Text = message; detail.ToolTip = message; detail.Visibility = Visibility.Visible; Height = 182;
                 if (IsVisible) { var dpi = VisualTreeHelper.GetDpi(this); var area = System.Windows.Forms.Screen.FromHandle(new System.Windows.Interop.WindowInteropHelper(this).Handle).WorkingArea; Top = Math.Max(area.Top / dpi.DpiScaleY + 12, Math.Min(Top, area.Bottom / dpi.DpiScaleY - Height - 12)); }

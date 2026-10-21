@@ -1,4 +1,4 @@
-param([string]$OutputName = 'release-0.4.1', [string]$PythonExe = 'python.exe', [switch]$IncludeMedia)
+param([string]$OutputName = 'release-0.4.2', [string]$PythonExe = 'python.exe', [switch]$IncludeMedia)
 $ErrorActionPreference = 'Stop'
 $taskRoot = $PSScriptRoot
 $taskOutput = Join-Path $taskRoot $OutputName

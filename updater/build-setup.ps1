@@ -1,4 +1,4 @@
-param([string]$PayloadFolder = 'release-0.4.1')
+param([string]$PayloadFolder = 'release-0.4.2')
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path $PSScriptRoot
 $taskPayload = Join-Path $taskRoot $PayloadFolder
@@ -11,14 +11,14 @@ if (Test-Path -LiteralPath (Join-Path $taskPayload 'ffmpeg.exe')) { throw 'Publi
 if ($LASTEXITCODE -ne 0) { throw 'Uninstaller compilation failed.' }
 Copy-Item -LiteralPath (Join-Path $taskRoot 'TangerineWindows.exe.config') -Destination (Join-Path $taskPayload 'MadarDrop.Uninstall.exe.config') -Force
 $taskFiles = Get-ChildItem -LiteralPath $taskPayload -File -Recurse | ForEach-Object { [PSCustomObject]@{Path=$_.FullName.Substring($taskPayload.Length + 1).Replace('\','/'); Hash=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash; Length=$_.Length} }
-$taskManifest = [PSCustomObject]@{Version='0.4.1';Files=@($taskFiles)}
-$taskManifestPath = Join-Path $PSScriptRoot 'manifest-0.4.1.json'
+$taskManifest = [PSCustomObject]@{Version='0.4.2';Files=@($taskFiles)}
+$taskManifestPath = Join-Path $PSScriptRoot 'manifest-0.4.2.json'
 [System.IO.File]::WriteAllText($taskManifestPath, ($taskManifest | ConvertTo-Json -Depth 5), (New-Object System.Text.UTF8Encoding($false)))
-$taskZip = Join-Path $taskRoot 'MadarDrop-0.4.1-payload.zip'
+$taskZip = Join-Path $taskRoot 'MadarDrop-0.4.2-payload.zip'
 if (Test-Path -LiteralPath $taskZip) { Remove-Item -LiteralPath $taskZip }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::CreateFromDirectory($taskPayload, $taskZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
-$taskExe = Join-Path $taskRoot 'MadarDrop-Setup-0.4.1.exe'
+$taskExe = Join-Path $taskRoot 'MadarDrop-Setup-0.4.2.exe'
 & $taskCompiler /nologo /target:winexe /platform:x64 /optimize+ /utf8output ('/out:' + $taskExe) ('/win32manifest:' + (Join-Path $taskRoot 'app.manifest')) ('/resource:' + $taskZip + ',payload.zip') ('/resource:' + $taskManifestPath + ',manifest.json') $taskReferences (Join-Path $PSScriptRoot 'UpdateCore.cs') (Join-Path $PSScriptRoot 'SetupSupport.cs') (Join-Path $PSScriptRoot 'Setup.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Setup compilation failed.' }
 Write-Output $taskExe

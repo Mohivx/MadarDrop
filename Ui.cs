@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -22,11 +22,23 @@ namespace TangerineWindows
         public static bool Arabic { get { return Preferences.Language == "ar"; } }
         public static bool Dark { get { return Preferences.Dark; } }
         public static event EventHandler Changed;
-        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.4.1|مدار دروب 0.4.1
+        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.4.2|مدار دروب 0.4.2
 Set up media tools…|إعداد أدوات الوسائط…
 Check for updates…|البحث عن تحديثات…
 Crop Image|قص الصورة
 Crop Video|قص الفيديو
+Video Snapshots|لقطات الفيديو
+SNAPSHOT|لقطات
+SPLIT|تقسيم
+ORGANIZE|تنظيم
+Splitting PDF|جارٍ تقسيم PDF
+Save each PDF page as a separate document|حفظ كل صفحة PDF في ملف مستقل
+Choose video frames and save full-resolution PNGs|اختيار لقطات من الفيديو وحفظها بصيغة PNG بالدقة الأصلية
+Add frame|إضافة لقطة
+Save frames|حفظ اللقطات
+Saving frames…|جارٍ حفظ اللقطات…
+Previous frame|اللقطة السابقة
+Next frame|اللقطة التالية
 MUTE|كتم الصوت
 Removing audio|جارٍ كتم الصوت
 Cropping video|جارٍ قص الفيديو

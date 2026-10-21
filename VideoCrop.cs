@@ -18,8 +18,8 @@ namespace TangerineWindows
 {
     public static class VideoFrames
     {
-        public static double Duration(string file, CancellationToken ct) {
-            var args = new[] { "-hide_banner", "-nostdin", "-i", file };
+        static string Probe(string file, CancellationToken ct, bool frame) {
+            var args = frame ? new[] { "-hide_banner", "-nostdin", "-i", file, "-map", "0:v:0", "-vf", "showinfo", "-frames:v", "1", "-f", "null", "-" } : new[] { "-hide_banner", "-nostdin", "-i", file };
             using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct)) {
                 timeout.CancelAfter(30000);
                 using (var process = new Process { StartInfo = new ProcessStartInfo(Engine.Tool("ffmpeg"), string.Join(" ", args.Select(Engine.Quote))) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true, StandardErrorEncoding = Encoding.UTF8 } }) {
@@ -27,11 +27,18 @@ namespace TangerineWindows
                     var output = process.StandardOutput.ReadToEndAsync(); var errors = process.StandardError.ReadToEndAsync();
                     using (timeout.Token.Register(delegate { try { if (!process.HasExited) process.Kill(); } catch { } })) process.WaitForExit();
                     timeout.Token.ThrowIfCancellationRequested(); output.Wait(); string text = errors.Result;
-                    var match = Regex.Match(text, @"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)");
-                    if (!match.Success) return 0;
-                    return double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) * 3600 + double.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture) * 60 + double.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
+                    return text;
                 }
             }
+        }
+        public static double Duration(string file, CancellationToken ct) {
+            var match = Regex.Match(Probe(file, ct, false), @"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)");
+            return match.Success ? double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) * 3600 + double.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture) * 60 + double.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture) : 0;
+        }
+        public static double FrameRate(string file, CancellationToken ct) {
+            var match = Regex.Match(Probe(file, ct, true), @"frame_rate:\s*(\d+)/(\d+)");
+            if (match.Success) { double numerator = double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture), denominator = double.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture); if (numerator > 0 && denominator > 0) return numerator / denominator; }
+            return 30;
         }
         public static BitmapSource Read(string file, double seconds, CancellationToken ct) {
             string temp = Path.Combine(Path.GetTempPath(), "madardrop-frame-" + Guid.NewGuid().ToString("N") + ".png");

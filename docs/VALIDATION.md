@@ -1,5 +1,30 @@
 # MadarDrop release validation
 
+## 0.4.2 — PDF page exports and video snapshots
+
+21 October 2026: 134 current local application checks passed: 22 PDF export, 17 snapshot/progress,
+40 core conversion, 18 video crop, 22 mute/progress and 15 floating workflow checks.
+
+The full embedded installer passed 11 further checks, including upgrading the actual 0.4.1
+executable in place in an isolated directory. Total local checks: 145. All 293 files in the
+clean installer payload passed manifest verification.
+
+The new PDF suite generates Unicode-named vector/text PDFs with varied page dimensions,
+rotation, crop boxes and custom physical units. It decodes actual 300 DPI PNG/JPG output,
+checks colors, dimensions, order and resolution metadata, and verifies split-page text,
+rotation and metadata with an independent reader. Existing results and source bytes remain
+unchanged. It cancels during a multi-page render (before the worker completes), checks
+cleanup, and rejects encrypted, corrupt, empty, oversized and 301-page raster exports.
+A large vector page can still split without a huge raster allocation.
+
+The snapshot suite extracts distinct selected video times, compares every decoded PNG pixel
+with the full-size source frame, verifies order, frame-rate navigation, source hashes,
+no-overwrite naming, invalid time rejection and cancellation during a real export.
+It renders the actual WPF window in English/light and Arabic/dark, including selected-frame
+thumbnails. Variable-rate video stepping remains a documented limit. Native UI input
+automation was not performed. The reference snapshot window was inspected on the official
+website; public screenshots contain only our app and locally generated fixtures.
+
 ## 0.4.1 — silent video copies and compact conversion progress
 
 21 October 2026: the current local application suites passed 40 core conversion checks,

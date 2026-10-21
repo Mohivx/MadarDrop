@@ -65,15 +65,17 @@ namespace TangerineWindows
                     if (files.Length > 1) r.Add(new Choice("collage", "COLLAGE", "Arrange these images in a collage"));
                 }
                 if (kinds.Length == 1 && kinds[0] == "pdf") {
-                    r.Add(new Choice("pdf-edit", "PAGES", "Reorder, rotate, duplicate, or remove pages"));
-                    r.Add(new Choice("pdf-merge", "MERGE", "Combine PDFs and organize their pages"));
                     r.Add(new Choice("pdf-compress", "COMPRESS", "Compress PDF streams without rasterizing text"));
                     r.Add(new Choice("metadata", "METADATA", "Edit PDF title, author, and metadata"));
+                    r.Add(new Choice("pdf-split", "SPLIT", "Save each PDF page as a separate document"));
+                    r.Add(new Choice("pdf-edit", "ORGANIZE", "Reorder, rotate, duplicate, or remove pages"));
+                    r.Add(new Choice("pdf-merge", "MERGE", "Combine PDFs and organize their pages"));
                 }
                 if (kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("mute", "MUTE", "Save a silent copy without changing video quality"));
                 if (kinds.All(k => k == "video" || k == "audio")) r.Add(new Choice("trim", "TRIM", "Keep a section of the recording"));
                 if (files.Length == 1 && kinds[0] == "video") r.Add(new Choice("video-crop", "CROP", "Crop video visually with a frame preview"));
                 if (kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("speed", "SPEED", "Change playback speed"));
+                if (files.Length == 1 && kinds[0] == "video") r.Add(new Choice("snapshot", "SNAPSHOT", "Choose video frames and save full-resolution PNGs"));
                 r.Add(new Choice("info", "INFO", "View file information"));
                 r.Add(new Choice("zip", "ZIP", "Create a ZIP archive"));
                 return r;
@@ -88,7 +90,7 @@ namespace TangerineWindows
                 case "document": formats = new[] { "txt", "md", "html", "docx" }; break;
                 case "sheet": formats = new[] { "csv", "tsv", "xlsx" }; break;
                 case "archive": return new List<Choice> { new Choice("extract", "EXTRACT", "Extract ZIP into a new folder"), new Choice("info", "INFO", "View file information") };
-                case "pdf": return new List<Choice> { new Choice("pdf-edit", "PAGES", "Organize pages in this PDF"), new Choice("pdf-merge", "MERGE", "Combine this with other PDFs"), new Choice("pdf-compress", "COMPRESS", "Compress the PDF"), new Choice("metadata", "METADATA", "View or edit metadata") };
+                case "pdf": formats = new[] { "jpg", "png" }; break;
                 default: return new List<Choice> { new Choice("zip", "ZIP", "Create a ZIP archive"), new Choice("info", "INFO", "View file information"), new Choice("copy-path", "COPY PATH", "Copy file paths") };
             }
             return formats.Select(f => new Choice(f, f.ToUpperInvariant(), f == "pdf" ? "Create a PDF from these images" : "Convert to " + f.ToUpperInvariant())).ToList();
@@ -161,6 +163,7 @@ namespace TangerineWindows
             if (!Enumerable.Range(0, 3).SelectMany(m => Catalog.Choices(files, m)).Any(c => c.Id == operation && c.Id != "info" && c.Id != "folder" && c.Id != "copy-path")) throw new InvalidOperationException("This operation is not supported for the selected files.");
             if (files.Length > 1 && operation != "zip" && operation != "pdf") throw new InvalidOperationException("This operation processes one file at a time.");
             ct.ThrowIfCancellationRequested();
+            if (Catalog.Kind(files[0]) == "pdf" && new[] { "jpg", "png", "pdf-split" }.Contains(operation)) return PdfExport.Save(files[0], operation, ct, log);
             if (operation == "zip") return Zip(files, ct);
             if (operation == "extract") return Extract(files[0], ct);
             string source = files[0], kind = Catalog.Kind(source), ext = "." + operation;
