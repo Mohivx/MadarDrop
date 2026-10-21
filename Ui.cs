@@ -22,11 +22,24 @@ namespace TangerineWindows
         public static bool Arabic { get { return Preferences.Language == "ar"; } }
         public static bool Dark { get { return Preferences.Dark; } }
         public static event EventHandler Changed;
-        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.4.0|مدار دروب 0.4.0
+        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.4.1|مدار دروب 0.4.1
 Set up media tools…|إعداد أدوات الوسائط…
 Check for updates…|البحث عن تحديثات…
 Crop Image|قص الصورة
 Crop Video|قص الفيديو
+MUTE|كتم الصوت
+Removing audio|جارٍ كتم الصوت
+Cropping video|جارٍ قص الفيديو
+Compressing files|جارٍ ضغط الملفات
+Trimming recording|جارٍ اقتطاع التسجيل
+Changing speed|جارٍ تغيير السرعة
+Creating archive|جارٍ إنشاء الأرشيف
+Extracting files|جارٍ استخراج الملفات
+Creating PDF|جارٍ إنشاء PDF
+Resizing image|جارٍ تحجيم الصورة
+Cropping image|جارٍ قص الصورة
+Could not complete|تعذّر إكمال العملية
+Save a silent copy without changing video quality|حفظ نسخة صامتة بنفس جودة الفيديو
 Crop video visually with a frame preview|قص الفيديو بالسحب مع معاينة اللقطة
 Loading preview…|جارٍ تحميل المعاينة…
 Processing|جارٍ المعالجة

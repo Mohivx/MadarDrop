@@ -70,9 +70,10 @@ namespace TangerineWindows
                     r.Add(new Choice("pdf-compress", "COMPRESS", "Compress PDF streams without rasterizing text"));
                     r.Add(new Choice("metadata", "METADATA", "Edit PDF title, author, and metadata"));
                 }
+                if (kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("mute", "MUTE", "Save a silent copy without changing video quality"));
                 if (kinds.All(k => k == "video" || k == "audio")) r.Add(new Choice("trim", "TRIM", "Keep a section of the recording"));
-                if (kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("speed", "SPEED", "Change playback speed"));
                 if (files.Length == 1 && kinds[0] == "video") r.Add(new Choice("video-crop", "CROP", "Crop video visually with a frame preview"));
+                if (kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("speed", "SPEED", "Change playback speed"));
                 r.Add(new Choice("info", "INFO", "View file information"));
                 r.Add(new Choice("zip", "ZIP", "Create a ZIP archive"));
                 return r;
@@ -130,7 +131,7 @@ namespace TangerineWindows
                 var errors = new StringBuilder();
                 p.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs e) { if (e.Data != null) lock (errors) { errors.AppendLine(e.Data); if (errors.Length > 12000) errors.Remove(0, errors.Length - 8000); } };
                 p.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e) {
-                    if (e.Data != null && e.Data.StartsWith("out_time=")) { if (log != null) log("Processed " + e.Data.Substring(9).Split('.')[0]); }
+                    if (e.Data != null && e.Data.StartsWith("out_time=")) { if (log != null) log("Processed " + e.Data.Substring(9)); }
                 };
                 p.Start(); p.BeginErrorReadLine(); p.BeginOutputReadLine();
                 using (ct.Register(delegate { try { if (!p.HasExited) p.Kill(); } catch { } })) { p.WaitForExit(); }
@@ -163,13 +164,19 @@ namespace TangerineWindows
             if (operation == "zip") return Zip(files, ct);
             if (operation == "extract") return Extract(files[0], ct);
             string source = files[0], kind = Catalog.Kind(source), ext = "." + operation;
-            bool tool = new[] { "compress", "resize", "crop", "trim", "speed", "video-crop" }.Contains(operation);
+            bool tool = new[] { "compress", "resize", "crop", "trim", "speed", "video-crop", "mute" }.Contains(operation);
             if (tool) {
                 ext = kind == "image" ? (Path.GetExtension(source).ToLowerInvariant() == ".jpg" || Path.GetExtension(source).ToLowerInvariant() == ".jpeg" ? ".jpg" : ".webp") : kind == "video" ? ".mp4" : ".mp3";
             }
+            if (operation == "mute") ext = Path.GetExtension(source).ToLowerInvariant();
             string temp = Temp(source, ext);
             try {
                 if (operation == "pdf") { MakePdf(files, temp, ct); }
+                else if (operation == "mute") {
+                    var muted = new List<string> { "-hide_banner", "-v", "error", "-nostdin", "-n", "-i", source, "-map", "0", "-c", "copy", "-an" };
+                    if (ext == ".m4v") muted.AddRange(new[] { "-f", "mp4" });
+                    muted.AddRange(new[] { "-progress", "pipe:1", temp }); Run("ffmpeg", muted, ct, log);
+                }
                 else if (kind == "subtitle") { ConvertSubtitle(source, temp, operation); }
                 else if (kind == "document") { ConvertDocument(source, temp, operation); }
                 else if (kind == "sheet") { WriteTable(temp, operation, ReadTable(source)); }
@@ -221,7 +228,7 @@ namespace TangerineWindows
                 } else { throw new InvalidOperationException("This conversion is not available in this preview."); }
                 ct.ThrowIfCancellationRequested();
                 if (!File.Exists(temp) || new FileInfo(temp).Length == 0) throw new IOException("The converter did not produce an output file.");
-                return Publish(temp, source, ext, operation == "compress" ? "compressed" : tool ? operation : "converted");
+                return Publish(temp, source, ext, operation == "mute" ? "muted" : operation == "compress" ? "compressed" : tool ? operation : "converted");
             } finally { if (File.Exists(temp)) File.Delete(temp); }
         }
         static void ConvertSubtitle(string source, string target, string format)

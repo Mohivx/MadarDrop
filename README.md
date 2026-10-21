@@ -5,10 +5,12 @@ Arabic and English. Light and dark appearance. Independent community project.
 
 <img src="assets/lemon-preview.png" alt="MadarDrop lemon mark" width="96" />
 
-0.4.0 adds visual video cropping with frame seeking, compact vertical photo tools, floating
-conversion progress and image thumbnails inside the wheel. Its independently drawn yellow citrus
-segments replace the whole-lemon icon. [Reference study and official demo review](docs/REFERENCE.ar.md)
-records the observed interaction and remaining functionality gaps.
+0.4.1 adds **MUTE** for video and replaces the larger progress panel with a compact conversion popup:
+operation title, filename/saved count and a thin proportional progress bar. Media progress uses
+actual processed time; files with unknown duration advance when saved. The wheel center now shows
+the hovered action. [Review of three reference videos](docs/VIDEO-REVIEW-2026-10-21.ar.md) records
+the observed behavior and remaining gaps. Visual video crop, focused photo tools and the yellow
+citrus icon remain available.
 
 **[Download for Windows](https://github.com/Mohivx/MadarDrop/releases/latest)** · [العربية](README.ar.md)
 
@@ -16,7 +18,7 @@ records the observed interaction and remaining functionality gaps.
 
 ## Install or update
 
-Windows 10/11 **x64**, .NET Framework **4.8**. Run `MadarDrop-Setup-0.4.0.exe` from Releases.
+Windows 10/11 **x64**, .NET Framework **4.8**. Run `MadarDrop-Setup-0.4.1.exe` from Releases.
 The installer detects registered installations, running legacy previews, and adjacent portable
 preview folders. It offers **Update**, **Repair**, or a fresh per-user **Install**. You can select
 an existing folder manually. No administrator privileges are needed. Updates stay in the same folder,
@@ -44,6 +46,9 @@ controls. Video crop lets you drag a region, choose an aspect ratio, change its 
 percentage and seek the frame preview. Seeking previews the crop across time; export crops the full
 recording and retains audio. Very small/odd crops normalize to even pixels for encoding. Conversion
 progress appears near the drop, with cancellation and an output link; errors stay visible.
+**MUTE** removes audio without re-encoding the video. It keeps the source container and non-audio
+tracks, writes a new `(muted)` copy and leaves the original intact. The popup close control cancels
+an active operation; clicking its saved message shows the result in Explorer.
 Open the main app from its tray icon for preferences. **Check for updates** in Settings manually
 checks this repository's latest stable release and opens its download page.
 
@@ -56,7 +61,7 @@ checks this repository's latest stable release and opens its download page.
 
 ## Limits
 
-This is a **0.4.0 preview**, not feature parity with any commercial app. No OCR, PDF-to-Office,
+This is a **0.4.1 preview**, not feature parity with any commercial app. No OCR, PDF-to-Office,
 PDF page-text editing, face detection, advanced timeline editor, RAR/TAR/GZIP, nearby sharing
 or floating file shelf. Encrypted PDFs must be unlocked first. Editing invalidates document
 signatures. Image editing exports a still image (up to 64 megapixels); animated metadata editing
@@ -75,7 +80,7 @@ python -m pip install -r requirements-build.txt
 .\updater\build-setup.ps1
 ```
 
-Output: `MadarDrop-Setup-0.4.0.exe`. Keep `runtime` beside the uninstalled app build.
+Output: `MadarDrop-Setup-0.4.1.exe`. Keep `runtime` beside the uninstalled app build.
 `build.ps1 -IncludeMedia` is for local experiments; the public setup builder refuses payloads
 containing `ffmpeg.exe`. See [THIRD-PARTY.txt](THIRD-PARTY.txt).
 
@@ -86,12 +91,13 @@ indicate an official relationship with Tangerine.
 ## Verify
 
 ```powershell
-.\release-0.4.0\TangerineWindows.exe --self-test C:\Temp\MadarDrop-core-new
-.\release-0.4.0\TangerineWindows.exe --test-editors C:\Temp\MadarDrop-editors-new
-.\release-0.4.0\TangerineWindows.exe --test-workflow C:\Temp\MadarDrop-workflow-new
-.\release-0.4.0\TangerineWindows.exe --test-crop C:\Temp\MadarDrop-crop-new
-.\release-0.4.0\TangerineWindows.exe --test-video-crop C:\Temp\MadarDrop-video-new
-.\MadarDrop-Setup-0.4.0.exe --test-package C:\Temp\MadarDrop-setup-new
+.\release-0.4.1\TangerineWindows.exe --self-test C:\Temp\MadarDrop-core-new
+.\release-0.4.1\TangerineWindows.exe --test-editors C:\Temp\MadarDrop-editors-new
+.\release-0.4.1\TangerineWindows.exe --test-workflow C:\Temp\MadarDrop-workflow-new
+.\release-0.4.1\TangerineWindows.exe --test-crop C:\Temp\MadarDrop-crop-new
+.\release-0.4.1\TangerineWindows.exe --test-video-crop C:\Temp\MadarDrop-video-new
+.\release-0.4.1\TangerineWindows.exe --test-mute C:\Temp\MadarDrop-mute-new
+.\MadarDrop-Setup-0.4.1.exe --test-package C:\Temp\MadarDrop-setup-new
 ```
 
 Each test requires a new directory. Media tests require FFmpeg on PATH or beside the build.

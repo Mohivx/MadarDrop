@@ -1,5 +1,30 @@
 # MadarDrop release validation
 
+## 0.4.1 — silent video copies and compact conversion progress
+
+21 October 2026: the current local application suites passed 40 core conversion checks,
+18 video crop checks, 15 workflow checks, 11 language/appearance checks, and 22 new
+mute/progress checks (106 application checks in total).
+
+The media suite generates a Unicode-named clip with two audio tracks. MP4, MOV, MKV,
+WebM and M4V outputs have no audio streams and retain every decoded video frame and
+recording duration. A separate MKV fixture verifies that subtitles survive muting.
+Already-silent input succeeds; source hashes remain unchanged. Pre-cancel and cancellation
+during processing leave no published or temporary output. The suite verifies timestamp-based
+progress, a compact single-close-control window, saved counts, late-callback protection,
+and native Arabic/dark and English/light renders. Regression checks also cover recordings
+over 24 hours, missing/out-of-order progress, failed batches, automatic cancellation dismissal,
+and persistent errors after a close request.
+
+The full embedded installer passed 11 additional checks, including upgrading the actual 0.4.0
+executable in an isolated folder. The clean payload contains 293 files, all verified by its manifest.
+
+The three user-supplied reference videos and additional official pages were reviewed.
+Evidence, timestamps and remaining differences are recorded in VIDEO-REVIEW-2026-10-21.ar.md.
+Reference media are excluded from the public source package. Native app input automation
+remains unperformed under the user's preference. Media tests use local FFmpeg; the public
+installer obtains that optional component separately through Settings.
+
 ## 0.4.0 — visual video crop and floating tools
 
 20 October 2026: local application suites passed: 40 conversion, 31 editor, 8 workflow,
