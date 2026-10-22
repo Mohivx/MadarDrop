@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -72,6 +72,7 @@ namespace TangerineWindows
                     r.Add(new Choice("pdf-merge", "MERGE", "Combine PDFs and organize their pages"));
                 }
                 if (files.Length == 1 && new[] { "video", "audio" }.Contains(kinds[0])) r.Add(new Choice("metadata", "METADATA", "Inspect, edit, or remove metadata"));
+                if (files.Length > 1 && kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("video-join", "JOIN", "Arrange clips and save one video"));
                 if (kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("mute", "MUTE", "Save a silent copy without changing video quality"));
                 if (kinds.All(k => k == "video" || k == "audio")) r.Add(new Choice("trim", "TRIM", "Keep a section of the recording"));
                 if (files.Length == 1 && kinds[0] == "video") r.Add(new Choice("video-crop", "CROP", "Crop video visually with a frame preview"));
@@ -106,6 +107,7 @@ namespace TangerineWindows
     {
         public int Width = 1920, X = 0, Y = 0, CropWidth = 800, CropHeight = 600;
         public double Start = 0, Duration = 10, Speed = 2;
+        public VideoJoinOptions JoinOptions;
         public double[] SplitPoints;
         public List<VideoMask> Redactions;
     }
@@ -168,9 +170,10 @@ namespace TangerineWindows
             if (files.Length == 0) throw new InvalidOperationException("Choose a file first.");
             foreach (string f in files) { if (!File.Exists(f)) throw new FileNotFoundException("The input file no longer exists.", f); }
             if (!Enumerable.Range(0, 3).SelectMany(m => Catalog.Choices(files, m)).Any(c => c.Id == operation && c.Id != "info" && c.Id != "folder" && c.Id != "copy-path")) throw new InvalidOperationException("This operation is not supported for the selected files.");
-            if (files.Length > 1 && operation != "zip" && operation != "pdf") throw new InvalidOperationException("This operation processes one file at a time.");
+            if (files.Length > 1 && operation != "zip" && operation != "pdf" && operation != "video-join") throw new InvalidOperationException("This operation processes one file at a time.");
             ct.ThrowIfCancellationRequested();
             if (Catalog.Kind(files[0]) == "pdf" && new[] { "jpg", "png", "pdf-split" }.Contains(operation)) return PdfExport.Save(files[0], operation, ct, log);
+            if (operation == "video-join") return VideoJoin.Save(files, options.JoinOptions, ct, log);
             if (operation == "video-split") return VideoOperations.Split(files[0], options.SplitPoints, ct, log);
             if (operation == "video-redact") return VideoOperations.Redact(files[0], options.Redactions, ct, log);
             if (operation == "zip") return Zip(files, ct);

@@ -1,5 +1,17 @@
 # MadarDrop release validation
 
+## 0.4.4 — ordered video joining
+
+22 October 2026: the user requested no application testing. The new joining flow is
+reviewed in source and compiled, but neither the app nor installer is executed and no
+new media export or UI interaction is claimed as tested. CI is skipped for this release
+commit for the same reason. Previous release checks below are historical evidence only.
+
+Packaging checks compare ZIP entries, lengths and SHA-256 hashes against the embedded
+payload manifest and ensure the source archive excludes private QA, user media and logs.
+The installer still excludes the optional FFmpeg binary. Screenshots remain the existing
+0.4.3 fixtures; there are no fabricated screenshots of the unlaunched joining window.
+
 ## 0.4.3 — video tools, media metadata and saved preferences
 
 22 October 2026: before the user requested that all further app testing stop, 201 local

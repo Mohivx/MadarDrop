@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -22,9 +22,30 @@ namespace TangerineWindows
         public static bool Arabic { get { return Preferences.Language == "ar"; } }
         public static bool Dark { get { return Preferences.Dark; } }
         public static event EventHandler Changed;
-        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.4.3|مدار دروب 0.4.3
+        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.4.4|مدار دروب 0.4.4
 Set up media tools…|إعداد أدوات الوسائط…
 Check for updates…|البحث عن تحديثات…
+Join Videos|دمج الفيديوهات
+Join videos|دمج الفيديوهات
+JOIN|دمج
+Joining videos|جارٍ دمج الفيديوهات
+Arrange clips and save one video|ترتيب المقاطع وحفظها في فيديو واحد
+Clips play in the order below|تُدمج المقاطع حسب الترتيب أدناه
+Move up|تحريك لأعلى
+Move down|تحريك لأسفل
+Remove|حذف
+Add videos…|إضافة فيديوهات…
+Output size|حجم الناتج
+Keep sound|إبقاء الصوت
+Up to 720p|حتى 720p
+Up to 1080p|حتى 1080p
+Up to 4K|حتى 4K
+Choose between 2 and 50 videos.|اختر من فيديوهين إلى 50 فيديو.
+Choose existing video files.|اختر ملفات فيديو موجودة.
+HDR video joining is not supported yet.|دمج فيديو HDR غير مدعوم حاليًا.
+Each video needs a known duration under 24 hours.|يحتاج كل فيديو إلى مدة معروفة لا تتجاوز 24 ساعة.
+The joined video could not be saved.|تعذّر حفظ الفيديو المدمج.
+MP4 · 30 fps · Fit to the first clip with black bars\nOne sound track per clip; silent clips keep their timing.\nOriginal files stay unchanged.|MP4 · 30 إطارًا/ث · ملاءمة لأبعاد المقطع الأول مع أشرطة سوداء\nمسار صوتي واحد لكل مقطع، والمقاطع الصامتة تحتفظ بمدتها.\nتبقى الملفات الأصلية محفوظة.
 Crop Image|قص الصورة
 Crop Video|قص الفيديو
 Video tools|أدوات الفيديو
