@@ -16,6 +16,8 @@ namespace TangerineWindows
         public Rect Selection;
         public double Aspect;
         public Action Changed;
+        public Action<DrawingContext, Rect> PreviewOverlay;
+        public bool ShowOutsideMask = true, SelectionVisible = true;
         Rect initial;
         Point origin;
         int handle;
@@ -124,11 +126,15 @@ namespace TangerineWindows
         protected override void OnRender(DrawingContext dc)
         {
             base.OnRender(dc); var b = ImageBounds(); var r = ScreenSelection(); dc.DrawImage(Source, b);
+            if (PreviewOverlay != null) PreviewOverlay(dc, b);
+            if (!SelectionVisible) return;
             var mask = new SolidColorBrush(Color.FromArgb(150, 47, 52, 55));
+            if (ShowOutsideMask) {
             dc.DrawRectangle(mask, null, new Rect(b.X, b.Y, b.Width, Math.Max(0, r.Top - b.Top)));
             dc.DrawRectangle(mask, null, new Rect(b.X, r.Bottom, b.Width, Math.Max(0, b.Bottom - r.Bottom)));
             dc.DrawRectangle(mask, null, new Rect(b.X, r.Top, Math.Max(0, r.Left - b.Left), r.Height));
             dc.DrawRectangle(mask, null, new Rect(r.Right, r.Top, Math.Max(0, b.Right - r.Right), r.Height));
+            }
             dc.DrawRectangle(null, new Pen(Theme.Accent, 1.5), r);
             if (dragging) {
                 var grid = new Pen(new SolidColorBrush(Color.FromArgb(100, 255, 255, 255)), .7);

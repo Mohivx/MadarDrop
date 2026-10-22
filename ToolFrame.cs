@@ -65,6 +65,7 @@ namespace TangerineWindows
         // The caller passes the success count; after an earlier failed item that is lower than the finished item, so use whichever is further.
         public void Saved(int completed) { if (complete || cancelling) return; progress.IsIndeterminate = false; progress.Value = 100.0 * Math.Min(total, Math.Max(completed, current)) / total; }
         public static double? Fraction(string message, double duration) {
+            if (message != null && message.StartsWith("Fraction ")) { double reportedFraction; return double.TryParse(message.Substring(9), System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out reportedFraction) && !double.IsNaN(reportedFraction) && !double.IsInfinity(reportedFraction) ? (double?)Math.Max(0, Math.Min(1, reportedFraction)) : null; }
             if (message != null && message.StartsWith("Page ")) { var pageParts = message.Split(' '); int done, count; if (pageParts.Length == 4 && pageParts[2] == "of" && int.TryParse(pageParts[1], out done) && int.TryParse(pageParts[3], out count) && done >= 0 && count > 0 && done <= count) return (double)done / count; return null; }
             if (duration <= 0 || message == null || !message.StartsWith("Processed ")) return null;
             // ffmpeg writes out_time as [-]H:MM:SS.ffffff with unbounded hours; TimeSpan rejects hours above 23.

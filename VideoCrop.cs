@@ -35,6 +35,7 @@ namespace TangerineWindows
             var match = Regex.Match(Probe(file, ct, false), @"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)");
             return match.Success ? double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) * 3600 + double.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture) * 60 + double.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture) : 0;
         }
+        public static string Describe(string file, CancellationToken ct) { return string.Join(Environment.NewLine, Probe(file, ct, false).Split('\n').Where(line => !line.Contains("At least one output file must be specified"))).Trim(); }
         public static double FrameRate(string file, CancellationToken ct) {
             var match = Regex.Match(Probe(file, ct, true), @"frame_rate:\s*(\d+)/(\d+)");
             if (match.Success) { double numerator = double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture), denominator = double.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture); if (numerator > 0 && denominator > 0) return numerator / denominator; }

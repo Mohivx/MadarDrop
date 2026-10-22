@@ -14,7 +14,7 @@ using System.Windows.Media;
 
 namespace TangerineWindows
 {
-    public sealed class UiPreferences { public string Language = "ar"; public bool Dark; }
+    public sealed class UiPreferences { public string Language = "ar"; public bool Dark; public bool WheelEnabled = true, Notify = true, OpenFolder; }
     public static class Ui
     {
         static string store = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TangerineWindows", "settings.json");
@@ -22,11 +22,48 @@ namespace TangerineWindows
         public static bool Arabic { get { return Preferences.Language == "ar"; } }
         public static bool Dark { get { return Preferences.Dark; } }
         public static event EventHandler Changed;
-        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.4.2|مدار دروب 0.4.2
+        static readonly Dictionary<string, string> translations = Parse(@"MadarDrop 0.4.3|مدار دروب 0.4.3
 Set up media tools…|إعداد أدوات الوسائط…
 Check for updates…|البحث عن تحديثات…
 Crop Image|قص الصورة
 Crop Video|قص الفيديو
+Video tools|أدوات الفيديو
+Split Video|تقسيم الفيديو
+Redact Video|طمس الفيديو
+Trim Video|اقتطاع الفيديو
+Change Video Speed|تغيير سرعة الفيديو
+Splitting video|جارٍ تقسيم الفيديو
+Redacting video|جارٍ طمس الفيديو
+Equal clips|مقاطع متساوية
+Split points (seconds or timecodes, separated by ;)|نقاط التقسيم بالثواني أو الوقت، افصل بينها بـ ؛
+Add split here|إضافة تقسيم هنا
+Solid|لون ثابت
+Blur|تمويه
+Color (RRGGBB)|اللون (RRGGBB)
+Color…|اللون…
+Images · Video · Audio · PDF pages · Subtitles\nText & DOCX · CSV / TSV / XLSX values · ZIP archives|صور · فيديو · صوت · صفحات PDF · ترجمة\nنص وDOCX · قيم CSV وTSV وXLSX · ملفات ZIP
+Photo and PDF tools, video snapshots, visual trim,\nsplit clips, timed video redaction and media metadata.\nPDF-to-Office is still in development.\nThis independent project is not affiliated with Tangerine for Mac.|أدوات الصور وPDF ولقطات الفيديو والاقتطاع المرئي،\nوتقسيم المقاطع والطمس الزمني وبيانات الوسائط.\nتحويل PDF إلى Office ما زال قيد التطوير.\nمشروع مستقل غير تابع لـTangerine على ماك.
+Add area|إضافة منطقة
+Remove area|حذف المنطقة
+Start|البداية
+End|النهاية
+Start here|البدء من هنا
+End here|الانتهاء هنا
+Audio pitch is preserved|الحفاظ على طبقة الصوت
+Drag the ends to adjust time|اسحب الطرفين لتعديل الفترة
+Enter a valid time.|أدخل وقتًا صحيحًا.
+Choose between 2 and 100 clips.|اختر بين مقطعين و100 مقطع.
+Split points must be ordered inside the video.|رتب نقاط التقسيم داخل مدة الفيديو.
+Choose a point inside the video.|اختر نقطة داخل الفيديو.
+Choose between 1 and 12 redaction areas.|اختر بين منطقة واحدة و12 منطقة طمس.
+Choose a valid area and time range.|اختر منطقة وفترة زمنية صحيحتين.
+Wait for the preview.|انتظر تحميل المعاينة.
+Split at chosen points or into equal clips|تقسيم عند نقاط تختارها أو إلى مقاطع متساوية
+Cover or blur areas during chosen time ranges|تغطية أو تمويه مناطق خلال فترات محددة
+Artist|الفنان
+Album|الألبوم
+Comment|التعليق
+Remove existing metadata|إزالة البيانات المضمّنة الحالية
 Video Snapshots|لقطات الفيديو
 SNAPSHOT|لقطات
 SPLIT|تقسيم
@@ -297,6 +334,7 @@ Keep this editing session under 300 pages.|أبقِ عدد الصفحات أقل
         }
         public static void SetLanguage(string language) { if (language != "ar" && language != "en") return; Preferences.Language = language; Save(); Notify(); }
         public static void SetDark(bool dark) { Preferences.Dark = dark; Save(); Notify(); }
+        public static void SetBehavior(bool wheel, bool notifications, bool reveal) { Preferences.WheelEnabled = wheel; Preferences.Notify = notifications; Preferences.OpenFolder = reveal; Save(); }
         static void Save() { try { Directory.CreateDirectory(Path.GetDirectoryName(store)); File.WriteAllText(store, new JavaScriptSerializer().Serialize(Preferences), new UTF8Encoding(false)); } catch { } }
         static void Notify() { if (Changed != null) Changed(null, EventArgs.Empty); }
         public static void TestStore(string file) { store = file; Preferences = Load(); }

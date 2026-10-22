@@ -71,11 +71,16 @@ namespace TangerineWindows
                     r.Add(new Choice("pdf-edit", "ORGANIZE", "Reorder, rotate, duplicate, or remove pages"));
                     r.Add(new Choice("pdf-merge", "MERGE", "Combine PDFs and organize their pages"));
                 }
+                if (files.Length == 1 && new[] { "video", "audio" }.Contains(kinds[0])) r.Add(new Choice("metadata", "METADATA", "Inspect, edit, or remove metadata"));
                 if (kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("mute", "MUTE", "Save a silent copy without changing video quality"));
                 if (kinds.All(k => k == "video" || k == "audio")) r.Add(new Choice("trim", "TRIM", "Keep a section of the recording"));
                 if (files.Length == 1 && kinds[0] == "video") r.Add(new Choice("video-crop", "CROP", "Crop video visually with a frame preview"));
                 if (kinds.Length == 1 && kinds[0] == "video") r.Add(new Choice("speed", "SPEED", "Change playback speed"));
                 if (files.Length == 1 && kinds[0] == "video") r.Add(new Choice("snapshot", "SNAPSHOT", "Choose video frames and save full-resolution PNGs"));
+                if (files.Length == 1 && kinds[0] == "video") {
+                    r.Add(new Choice("video-split", "SPLIT", "Split at chosen points or into equal clips"));
+                    r.Add(new Choice("video-redact", "REDACT", "Cover or blur areas during chosen time ranges"));
+                }
                 r.Add(new Choice("info", "INFO", "View file information"));
                 r.Add(new Choice("zip", "ZIP", "Create a ZIP archive"));
                 return r;
@@ -101,6 +106,8 @@ namespace TangerineWindows
     {
         public int Width = 1920, X = 0, Y = 0, CropWidth = 800, CropHeight = 600;
         public double Start = 0, Duration = 10, Speed = 2;
+        public double[] SplitPoints;
+        public List<VideoMask> Redactions;
     }
 
     public static class Engine
@@ -164,6 +171,8 @@ namespace TangerineWindows
             if (files.Length > 1 && operation != "zip" && operation != "pdf") throw new InvalidOperationException("This operation processes one file at a time.");
             ct.ThrowIfCancellationRequested();
             if (Catalog.Kind(files[0]) == "pdf" && new[] { "jpg", "png", "pdf-split" }.Contains(operation)) return PdfExport.Save(files[0], operation, ct, log);
+            if (operation == "video-split") return VideoOperations.Split(files[0], options.SplitPoints, ct, log);
+            if (operation == "video-redact") return VideoOperations.Redact(files[0], options.Redactions, ct, log);
             if (operation == "zip") return Zip(files, ct);
             if (operation == "extract") return Extract(files[0], ct);
             string source = files[0], kind = Catalog.Kind(source), ext = "." + operation;
@@ -212,7 +221,7 @@ namespace TangerineWindows
                         if (operation == "speed") {
                             // atempo handles missing audio by using an optional audio map.
                             a.RemoveRange(a.IndexOf("-vf"), 2);
-                            a.AddRange(new[] { "-vf", "setpts=PTS/" + options.Speed.ToString(Inv) + ",scale=trunc(iw/2)*2:trunc(ih/2)*2", "-af", "atempo=" + options.Speed.ToString(Inv) });
+                            a.AddRange(new[] { "-vf", "setpts=PTS/" + options.Speed.ToString(Inv) + ",scale=trunc(iw/2)*2:trunc(ih/2)*2", "-af", VideoOperations.AudioTempo(options.Speed) });
                         }
                         if (audioOnly) {
                             switch (ext) {

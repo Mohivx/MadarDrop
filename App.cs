@@ -115,7 +115,7 @@ namespace TangerineWindows
                 var gradient = new LinearGradientBrush(active ? Theme.Orange : Ui.Dark ? Color.FromRgb(58, 64, 70) : Color.FromArgb(232, 255, 249, 240), active ? Color.FromRgb(255, 119, 41) : Ui.Dark ? Color.FromRgb(42, 47, 53) : Color.FromArgb(220, 255, 237, 224), 90);
                 double angle = -90 + i * step;
                 dc.DrawGeometry(gradient, new Pen(active ? Theme.Accent : Theme.Line, 1.4), Segment(angle - step / 2 + 1.7, angle + step / 2 - 1.7));
-                bool tool = new[] { "compress", "metadata", "edit", "annotate", "background", "crop-editor", "redact", "video-crop", "mute", "snapshot", "pdf-split", "pdf-edit", "pdf-compress" }.Contains(Items[i].Id);
+                bool tool = new[] { "compress", "metadata", "edit", "annotate", "background", "crop-editor", "redact", "video-crop", "mute", "snapshot", "pdf-split", "pdf-edit", "pdf-compress", "video-split", "video-redact", "trim", "speed" }.Contains(Items[i].Id);
                 Point textAt = Polar(111, angle);
                 if (tool) { Icon(dc, Items[i].Id, new Point(textAt.X, textAt.Y - 9), active ? Brushes.White : Theme.Ink); textAt.Y += 12; }
                 Label(dc, Items[i].Label, textAt, tool ? Ui.Arabic ? 12 : 9.5 : Items[i].Label.Length > 7 ? 10 : 12.5, active ? Brushes.White : Theme.Ink, true);
@@ -143,7 +143,8 @@ namespace TangerineWindows
         public void Configure(string[] paths, int mode)
         {
             Items = Catalog.Choices(paths, mode); Hover = -1;
-            menuMode = mode; HasFiles = paths.Length > 0; HasMore = mode == 1 && Items.Count > 7;
+            int limit = mode == 1 && paths.Length > 0 && paths.All(p2 => Catalog.Kind(p2) == "video") ? 9 : 7;
+            menuMode = mode; HasFiles = paths.Length > 0; HasMore = mode == 1 && Items.Count > limit;
             string first = paths.FirstOrDefault();
             if (first != thumbnailPath) {
                 thumbnailPath = first; thumbnail = null; fileExtension = first == null ? null : Path.GetExtension(first).TrimStart('.').ToUpperInvariant();
@@ -151,7 +152,7 @@ namespace TangerineWindows
                     using (var stream = File.OpenRead(first)) { var bitmap = new BitmapImage(); bitmap.BeginInit(); bitmap.CacheOption = BitmapCacheOption.OnLoad; bitmap.DecodePixelWidth = 90; bitmap.StreamSource = stream; bitmap.EndInit(); bitmap.Freeze(); thumbnail = bitmap; }
                 } catch { }
             }
-            if (HasMore) Items = Items.Take(7).ToList();
+            if (HasMore) Items = Items.Take(limit).ToList();
             else if (Items.Count > 8) Items = Items.Take(7).Concat(new[] { new Choice("more", "MORE", "Open all file tools") }).ToList();
             long size = 0; foreach (string path in paths) try { size += new FileInfo(path).Length; } catch { }
             Center = paths.Length == 0 ? "Drop a file" : mode == 1 ? size >= 1048576 ? (size / 1048576.0).ToString("0.#") + " MB" : (size / 1024.0).ToString("0.#") + " KB" : paths.Length == 1 ? Path.GetFileName(paths[0]) : paths.Length + " files";
@@ -162,15 +163,17 @@ namespace TangerineWindows
         {
             var p = new Pen(color, 1.6) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
             dc.PushTransform(new TranslateTransform(center.X, center.Y));
-            if (id == "snapshot") { dc.DrawRoundedRectangle(null, p, new Rect(-8, -5, 16, 12), 2, 2); dc.DrawEllipse(null, p, new Point(0, 1), 3, 3); dc.DrawLine(p, new Point(-4, -7), new Point(3, -7)); }
-            else if (id == "pdf-split") { dc.DrawLine(p, new Point(0, -8), new Point(0, 8)); dc.DrawRectangle(null, p, new Rect(-9, -5, 5, 10)); dc.DrawRectangle(null, p, new Rect(4, -5, 5, 10)); }
+            if (id == "trim") { dc.DrawLine(p, new Point(-7, -6), new Point(7, 6)); dc.DrawLine(p, new Point(-7, 6), new Point(7, -6)); dc.DrawEllipse(null, p, new Point(-7, -6), 2.5, 2.5); dc.DrawEllipse(null, p, new Point(-7, 6), 2.5, 2.5); }
+            else if (id == "speed") { dc.DrawEllipse(null, p, new Point(0, 0), 7, 7); dc.DrawLine(p, new Point(0, 0), new Point(4, -4)); }
+            else if (id == "snapshot") { dc.DrawRoundedRectangle(null, p, new Rect(-8, -5, 16, 12), 2, 2); dc.DrawEllipse(null, p, new Point(0, 1), 3, 3); dc.DrawLine(p, new Point(-4, -7), new Point(3, -7)); }
+            else if (id == "pdf-split" || id == "video-split") { dc.DrawLine(p, new Point(0, -8), new Point(0, 8)); dc.DrawRectangle(null, p, new Rect(-9, -5, 5, 10)); dc.DrawRectangle(null, p, new Rect(4, -5, 5, 10)); }
             else if (id == "pdf-edit") { dc.DrawRectangle(null, p, new Rect(-8, -7, 6, 6)); dc.DrawRectangle(null, p, new Rect(2, -7, 6, 6)); dc.DrawRectangle(null, p, new Rect(-8, 2, 6, 6)); dc.DrawRectangle(null, p, new Rect(2, 2, 6, 6)); }
             else if (id == "mute") { dc.DrawGeometry(null, p, Geometry.Parse("M -7,-3 L -3,-3 L 2,-7 L 2,7 L -3,3 L -7,3 Z")); dc.DrawLine(p, new Point(5, -3), new Point(10, 3)); dc.DrawLine(p, new Point(5, 3), new Point(10, -3)); }
             else if (id == "edit") { for (int i = 0; i < 3; i++) { double y = -5 + i * 5; dc.DrawLine(p, new Point(-7, y), new Point(7, y)); dc.DrawEllipse(Theme.Surface, p, new Point(i == 1 ? -3 : 3, y), 1.8, 1.8); } }
             else if (id == "background") { dc.DrawRoundedRectangle(null, p, new Rect(-7, -6, 14, 12), 1, 1); dc.DrawEllipse(null, p, new Point(3, -2), 1.5, 1.5); dc.DrawLine(p, new Point(-6, 5), new Point(-1, -1)); dc.DrawLine(p, new Point(-1, -1), new Point(3, 4)); }
             else if (id == "crop-editor" || id == "video-crop") { dc.DrawLine(p, new Point(-4, -8), new Point(-4, 4)); dc.DrawLine(p, new Point(-4, 4), new Point(8, 4)); dc.DrawLine(p, new Point(-8, -4), new Point(4, -4)); dc.DrawLine(p, new Point(4, -4), new Point(4, 8)); }
             else if (id == "annotate") { dc.DrawLine(p, new Point(-6, 6), new Point(4, -6)); dc.DrawLine(p, new Point(-3, 7), new Point(7, -5)); dc.DrawLine(p, new Point(4, -6), new Point(7, -5)); dc.DrawLine(p, new Point(-6, 6), new Point(-3, 7)); dc.DrawLine(p, new Point(-6, 6), new Point(-7, 9)); }
-            else if (id == "redact") { dc.DrawEllipse(null, p, new Point(0, 0), 8, 4.5); dc.DrawEllipse(null, p, new Point(0, 0), 2.5, 2.5); dc.DrawLine(p, new Point(-6, -7), new Point(6, 7)); }
+            else if (id == "redact" || id == "video-redact") { dc.DrawEllipse(null, p, new Point(0, 0), 8, 4.5); dc.DrawEllipse(null, p, new Point(0, 0), 2.5, 2.5); dc.DrawLine(p, new Point(-6, -7), new Point(6, 7)); }
             else if (id == "metadata") { var g = new StreamGeometry(); using (var c = g.Open()) { c.BeginFigure(new Point(-7, 1), false, true); c.LineTo(new Point(1, -7), true, false); c.LineTo(new Point(7, -7), true, false); c.LineTo(new Point(7, -1), true, false); c.LineTo(new Point(-1, 7), true, false); } dc.DrawGeometry(null, p, g); dc.DrawEllipse(null, p, new Point(4, -4), 1, 1); }
             else { for (int i = 0; i < 4; i++) { dc.PushTransform(new RotateTransform(i * 90)); dc.DrawLine(p, new Point(-6, -6), new Point(-1, -1)); dc.DrawLine(p, new Point(-1, -1), new Point(-5, -1)); dc.DrawLine(p, new Point(-1, -1), new Point(-1, -5)); dc.Pop(); } }
             dc.Pop();
@@ -274,7 +277,8 @@ namespace TangerineWindows
         int mode = 0, completed = 0, currentPage = 0;
         public MainWindow(bool render)
         {
-            Title = "MadarDrop 0.4.2"; Width = 1050; Height = 740; MinWidth = 940; MinHeight = 690;
+            enabled = Ui.Preferences.WheelEnabled; notify = Ui.Preferences.Notify; openFolder = Ui.Preferences.OpenFolder;
+            Title = "MadarDrop 0.4.3"; Width = 1050; Height = 740; MinWidth = 940; MinHeight = 690;
             WindowStartupLocation = WindowStartupLocation.CenterScreen; Background = Theme.Paper; Foreground = Theme.Ink;
             FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
             Resources.Add(typeof(Button), ButtonStyle());
@@ -295,7 +299,7 @@ namespace TangerineWindows
             Grid.SetColumn(pages, 1); body.Children.Add(pages);
             BuildConvert(); BuildActivity(); BuildSettings(); SetPage(0);
             var footer = new Grid { Margin = new Thickness(28, 0, 28, 0) }; footer.ColumnDefinitions.Add(new ColumnDefinition()); footer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            engine.VerticalAlignment = VerticalAlignment.Center; footer.Children.Add(engine); var version = Theme.Text("MadarDrop · v0.4.2", 10, Theme.Muted); version.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(version, 1); footer.Children.Add(version); Grid.SetRow(footer, 2); root.Children.Add(footer);
+            engine.VerticalAlignment = VerticalAlignment.Center; footer.Children.Add(engine); var version = Theme.Text("MadarDrop · v0.4.3", 10, Theme.Muted); version.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(version, 1); footer.Children.Add(version); Grid.SetRow(footer, 2); root.Children.Add(footer);
             wheel = new WheelWindow(this);
             watcher = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(25) }; watcher.Tick += Watch;
             cancel.Click += delegate { if (cancellation != null) cancellation.Cancel(); }; cancel.Visibility = Visibility.Collapsed;
@@ -375,14 +379,14 @@ namespace TangerineWindows
             var appearance = new ComboBox { Padding = new Thickness(8), Margin = new Thickness(0, 7, 0, 18), Width = 210, HorizontalAlignment = HorizontalAlignment.Left };
             appearance.Items.Add(new ComboBoxItem { Content = "Light", Tag = false }); appearance.Items.Add(new ComboBoxItem { Content = "Dark", Tag = true }); appearance.SelectedIndex = Ui.Dark ? 1 : 0;
             appearance.SelectionChanged += delegate { Ui.SetDark((bool)((ComboBoxItem)appearance.SelectedItem).Tag); }; prefs.Children.Add(appearance);
-            var global = new CheckBox { Content = "Show the wheel with Shift while dragging in File Explorer", IsChecked = true, Margin = new Thickness(0, 0, 0, 21) }; global.Checked += delegate { enabled = true; }; global.Unchecked += delegate { enabled = false; wheel.Hide(); }; prefs.Children.Add(global);
-            var notifications = new CheckBox { Content = "Show a notification when conversion finishes", IsChecked = true, Margin = new Thickness(0, 0, 0, 21) }; notifications.Checked += delegate { notify = true; }; notifications.Unchecked += delegate { notify = false; }; prefs.Children.Add(notifications);
-            var folder = new CheckBox { Content = "Open the output folder after conversion", IsChecked = false, Margin = new Thickness(0, 0, 0, 22) }; folder.Checked += delegate { openFolder = true; }; folder.Unchecked += delegate { openFolder = false; }; prefs.Children.Add(folder);
+            var global = new CheckBox { Content = "Show the wheel with Shift while dragging in File Explorer", IsChecked = enabled, Margin = new Thickness(0, 0, 0, 21) }; global.Checked += delegate { enabled = true; Ui.SetBehavior(enabled, notify, openFolder); }; global.Unchecked += delegate { enabled = false; wheel.Hide(); Ui.SetBehavior(enabled, notify, openFolder); }; prefs.Children.Add(global);
+            var notifications = new CheckBox { Content = "Show a notification when conversion finishes", IsChecked = notify, Margin = new Thickness(0, 0, 0, 21) }; notifications.Checked += delegate { notify = true; Ui.SetBehavior(enabled, notify, openFolder); }; notifications.Unchecked += delegate { notify = false; Ui.SetBehavior(enabled, notify, openFolder); }; prefs.Children.Add(notifications);
+            var folder = new CheckBox { Content = "Open the output folder after conversion", IsChecked = openFolder, Margin = new Thickness(0, 0, 0, 22) }; folder.Checked += delegate { openFolder = true; Ui.SetBehavior(enabled, notify, openFolder); }; folder.Unchecked += delegate { openFolder = false; Ui.SetBehavior(enabled, notify, openFolder); }; prefs.Children.Add(folder);
             var media = Theme.Button("Set up media tools…", false); media.Click += delegate { MediaTools.Setup(this); }; prefs.Children.Add(media);
             var updates = Theme.Button("Check for updates…", false); updates.Click += delegate { UpdateCheck.Check(this); }; prefs.Children.Add(updates);
             prefs.Children.Add(Theme.Text("Formats in this preview", 15, Theme.Ink, FontWeights.SemiBold));
-            var formats = Theme.Text("Images · Video · Audio · Image-to-PDF · Subtitles\nText & DOCX · CSV / TSV / XLSX values · ZIP archives", 12, Theme.Muted); formats.Margin = new Thickness(0, 8, 0, 20); formats.LineHeight = 23; prefs.Children.Add(formats);
-            prefs.Children.Add(Theme.Text("NEW: Photo editor, annotations, redaction, backgrounds,\nmetadata, collage, and PDF page editing.\nPDF-to-Office is still in development.\nThis independent prototype is not affiliated with Tangerine for Mac.", 11, Theme.Muted));
+            var formats = Theme.Text("Images · Video · Audio · PDF pages · Subtitles\nText & DOCX · CSV / TSV / XLSX values · ZIP archives", 12, Theme.Muted); formats.Margin = new Thickness(0, 8, 0, 20); formats.LineHeight = 23; prefs.Children.Add(formats);
+            prefs.Children.Add(Theme.Text("Photo and PDF tools, video snapshots, visual trim,\nsplit clips, timed video redaction and media metadata.\nPDF-to-Office is still in development.\nThis independent project is not affiliated with Tangerine for Mac.", 11, Theme.Muted));
             stack.Children.Add(Theme.Card(prefs));
             var quitButton = Theme.Button("Quit MadarDrop", false); quitButton.HorizontalAlignment = HorizontalAlignment.Left; quitButton.Margin = new Thickness(0, 18, 0, 0); quitButton.Click += delegate { Quit(); }; stack.Children.Add(quitButton);
             var scroll = new ScrollViewer { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }; pageList.Add(scroll); pages.Children.Add(scroll);
@@ -522,6 +526,11 @@ namespace TangerineWindows
             if (choice.Id == "folder") { ShowOutput(p[0]); return; }
             if (choice.Id == "info") { if (!quick) Reveal(); ShowInfo(p); return; }
             var options = new Parameters();
+            bool visualVideo = p.Length == 1 && Catalog.Kind(p[0]) == "video" && new[] { "trim", "speed", "video-split", "video-redact" }.Contains(choice.Id);
+            if (visualVideo) {
+                try { var dialog = new VideoToolWindow(p[0], choice.Id); if (!ShowModal(dialog, quick, anchor)) return; options = dialog.Value; }
+                catch (Exception e) { MessageBox.Show(e.Message, Ui.T("Video tools")); return; }
+            }
             if (choice.Id == "snapshot") {
                 try { var dialog = new VideoSnapshotWindow(p[0]); if (ShowModal(dialog, quick, anchor)) RecordEdited(dialog.Output); }
                 catch (Exception e) { MessageBox.Show(e.Message, Ui.T("Video Snapshots")); } return;
@@ -530,7 +539,7 @@ namespace TangerineWindows
                 try { var dialog = new VideoCropWindow(p[0]); if (!ShowModal(dialog, quick, anchor)) return; options = dialog.Value; }
                 catch (Exception e) { MessageBox.Show(e.Message, Ui.T("Crop Video")); return; }
             }
-            if (new[] { "resize", "crop", "trim", "speed" }.Contains(choice.Id)) { if (!quick) Reveal(); var dialog = new OptionsDialog(choice.Id); if (!ShowModal(dialog, quick, anchor)) return; options = dialog.Value; }
+            if (!visualVideo && new[] { "resize", "crop", "trim", "speed" }.Contains(choice.Id)) { if (!quick) Reveal(); var dialog = new OptionsDialog(choice.Id); if (!ShowModal(dialog, quick, anchor)) return; options = dialog.Value; }
             cancellation = new CancellationTokenSource(); var ct = cancellation.Token;
             var jobCancellation = cancellation; FloatingJob job = null;
             if (quick) {
@@ -557,7 +566,7 @@ namespace TangerineWindows
                             return choice.Id == "pdf-compress" ? PdfWorker.Save(batch, null, false, "compress", null, ct) : Engine.Convert(batch, choice.Id, options, ct, detail => Dispatcher.BeginInvoke(new Action(delegate { state.Text = item + " / " + batches.Length + " · " + detail; if (job != null) job.Report(Path.GetFileName(batch[0]), item, batches.Length, detail, FloatingJob.Fraction(detail, duration)); })));
                         });
                         lastOutput = output; success++; AddHistory(Path.GetFileName(output), DateTime.Now.ToShortTimeString() + " · " + choice.Label + " · " + Path.GetDirectoryName(output), output, true);
-                        produced += Directory.Exists(output) && Catalog.Kind(batch[0]) == "pdf" && new[] { "jpg", "png", "pdf-split" }.Contains(choice.Id) ? Directory.GetFiles(output).Length : 1;
+                        produced += Directory.Exists(output) && (choice.Id == "video-split" || (Catalog.Kind(batch[0]) == "pdf" && new[] { "jpg", "png", "pdf-split" }.Contains(choice.Id))) ? Directory.GetFiles(output).Length : 1;
                         if (job != null) job.Saved(success);
                     } catch (OperationCanceledException) { throw; }
                     catch (Exception e) { failed++; failure = Path.GetFileName(batch[0]) + ": " + e.Message; AddHistory(Path.GetFileName(batch[0]), e.Message, null, false); }
@@ -575,6 +584,8 @@ namespace TangerineWindows
             switch (operation) {
                 case "mute": return Ui.T("Removing audio");
                 case "pdf-split": return Ui.T("Splitting PDF");
+                case "video-split": return Ui.T("Splitting video");
+                case "video-redact": return Ui.T("Redacting video");
                 case "video-crop": return Ui.T("Cropping video");
                 case "compress": case "pdf-compress": return Ui.T("Compressing files");
                 case "trim": return Ui.T("Trimming recording");
@@ -658,6 +669,8 @@ namespace TangerineWindows
             if (args.Length > 1 && args[0] == "--test-mute") return MuteTests.Run(args[1]);
             if (args.Length > 1 && args[0] == "--test-snapshot") return SnapshotTests.Run(args[1]);
             if (args.Length > 1 && args[0] == "--test-pdf-export") return PdfExportTests.Run(args[1]);
+            if (args.Length > 1 && args[0] == "--test-video-tools") return VideoToolTests.Run(args[1]);
+            if (args.Length > 1 && args[0] == "--test-tool-models") return ToolModelTests.Run(args[1]);
             if (args.Length > 2 && args[0] == "--test-ui") return UiTests.Run(args[1], args[2]);
             if (args.Length > 2 && args[0] == "--convert") {
                 try { string output = Engine.Convert(args.Skip(2).ToArray(), args[1], new Parameters(), CancellationToken.None, null); File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "last-conversion.txt"), output); return 0; }

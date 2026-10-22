@@ -1,5 +1,28 @@
 # MadarDrop release validation
 
+## 0.4.3 — video tools, media metadata and saved preferences
+
+22 October 2026: before the user requested that all further app testing stop, 201 local
+application checks completed: 20 new video/media checks, 27 tool/model checks, 17 image crop,
+31 editor, 15 workflow, 18 video crop, 22 mute/progress, 11 language/appearance and 40 core checks.
+No further app or installer executions are performed for this release after that instruction.
+The release is compiled and packaged without launching the app; installer extraction/upgrade
+was not re-tested for 0.4.3. The release commit skips CI to respect the same request.
+
+The media suite generated its own three-second video with two audio tracks. It checked Unicode
+and escaped metadata, unchanged encoded streams after metadata editing, location removal,
+accurate split boundaries and decoded content, timed solid and blurred masks, audio retention,
+silent videos, speed/pitch, cancellation during processing, source preservation and cleanup.
+
+Tool/model checks covered all nine video wheel positions, time parsing, split limits,
+redaction geometry and intervals, draggable range clamping, cloned parameters, persistent
+settings, progress fractions and native English/light and Arabic/dark renders. Screenshots in
+this source package were generated before the stop instruction from synthetic fixtures.
+They are not screenshots of user media or the original application.
+
+See VIDEO-TOOLS-0.4.3.ar.md for capabilities and remaining differences. Remote CI remains
+available for future developer use, but it is not a claimed validation of this release.
+
 ## 0.4.2 — PDF page exports and video snapshots
 
 21 October 2026: 134 current local application checks passed: 22 PDF export, 17 snapshot/progress,
